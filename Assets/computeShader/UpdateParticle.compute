@@ -1,0 +1,87 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#include "particle.h"
+#include "mathLib.h"
+
+
+#pragma kernel UpdateParticle
+
+
+
+RWStructuredBuffer<EmitParticleInfo> emitParticleInfo;
+
+RWStructuredBuffer<uint> alivelist;
+AppendStructuredBuffer<uint> deadlist;
+AppendStructuredBuffer<uint> alivelistSec;
+
+RWStructuredBuffer<ParticleCounter> particleCounter;
+RWStructuredBuffer<Particle> particlePool;
+RWStructuredBuffer<uint> instancingArg;
+
+[numthreads(1024,1,1)]
+void UpdateParticle (uint3 id : SV_DispatchThreadID)
+{
+  uint alivelistCount = particleCounter[0].updateParticleCount;
+  if (id.x < alivelistCount){
+	uint particleId = alivelist[id.x];
+	Particle particle = particlePool[particleId];
+	particle.velocity += emitParticleInfo[0].acceleration * emitParticleInfo[0]._dt;
+	particle.lifespan += emitParticleInfo[0]._dt;
+	particle.position += particle.velocity * emitParticleInfo[0]._dt;
+	//particle.quaternion = qmul(particle.quaternion, Quaternion(float3(55.0, 45.0, 45.0), 1.0));
+	if ( particle.lifespan  > emitParticleInfo[0].lifespan ){
+	  deadlist.Append(particleId);
+
+	  InterlockedAdd(particleCounter[0].deadlistCount, 1);
+	  InterlockedAdd(particleCounter[0].alivelistCount, -1);
+	}else{
+	  //InterlockedAdd(instancingArg[1], 1);
+	  alivelistSec.Append(particleId);
+
+	}
+
+
+	float4 deltaRot = QSlerp(emitParticleInfo[0].rotation, Quaternion(), emitParticleInfo[0]._dt);
+	particle.quaternion = qmul(particle.quaternion, deltaRot);
+	particle.quaternion = NormalizeQuaternion(particle.quaternion);
+	float4 q = particle.quaternion;
+	
+	float4x4 rotMat = float4x4(
+		1 - 2 *q.y * q.y - 2 * q.z * q.z,   2 * q.x* q.y + 2 * q.w * q.z,   2 * q.x * q.z - 2 * q.w * q.y, 0.0,
+		2 * q.x * q.y - 2 * q.w * q.z, 1 - 2 * q.x * q.x - 2 * q.z * q.z, 2 * q.y * q.z + 2 * q.w * q.x, 0.0,
+		2 * q.x * q.z + 2 * q.w * q.y, 2 * q.y * q.z - 2 * q.w* q.x, 1 - 2 * q.x * q.x - 2 * q.y * q.y, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	);
+
+	float4x4 scale = float4x4(
+		particle.scale.x, 0.0, 0.0, 0.0,
+		0.0, particle.scale.y, 0.0, 0.0,
+		0.0, 0.0, particle.scale.z, 0.0,
+		0.0, 0.0, 0.0, 1.0
+		);
+
+	float4x4 trans = float4x4(
+		1.0, 0.0, 0.0, particle.position.x,
+		0.0, 1.0, 0.0, particle.position.y,
+		0.0, 0.0, 1.0, particle.position.z,
+		0.0, 0.0, 0.0, 1.0
+		);
+
+
+
+	particle.model = mul(trans,mul(rotMat, scale));
+
+	/*
+	
+	particle.model =float4x4(
+		particle.scale.x, 0.0, 0.0, particle.position.x,
+	  0.0, particle.scale.y, 0.0, particle.position.y,
+	  0.0, 0.0, particle.scale.z, particle.position.z,
+	  0.0, 0.0, 0.0, 1.0
+	);
+	*/
+
+	particlePool[particleId] = particle;
+	//particlePool[0] = particle;
+  }
+
+}
