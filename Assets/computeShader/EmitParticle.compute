@@ -40,6 +40,30 @@ void SetDefaultScale(uint index, float2 randKey) {
 	particlePool[index].scale = (randNP1(randKey, 0.0) * emitParticleInfo[0].scaleRandom + 1.0)  * emitParticleInfo[0].scale;
 }
 
+
+void boxEmit(uint index, uint3 id) {
+	float2 randKey = float2(index, id.x);
+	float3 posOffset = float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), randNP1(randKey, 2.0)) * emitParticleInfo[0].boxEmitSize;
+	particlePool[index].velocity = emitParticleInfo[0].startVelocity * emitParticleInfo[0].forwardDir;
+	particlePool[index].quaternion = emitParticleInfo[0].rotation;
+	particlePool[index].position = emitParticleInfo[0].originPos + posOffset;
+	SetDefaultScale(index, randKey);
+	SetSubframe(index, id);	
+	
+}
+
+void coneEmit(uint index, uint3 id) {
+	float2 randKey = float2(index, id.x/1024.0);
+	float randAngle = rand(randKey, 2.0) * emitParticleInfo[0].coneEmitAngle;
+	float4 rot = Quaternion( normalize(float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), 0.0)), randAngle);
+	float3 dir = rotate_vector(emitParticleInfo[0].forwardDir, rot);
+	particlePool[index].velocity = emitParticleInfo[0].startVelocity * dir;
+	particlePool[index].quaternion = emitParticleInfo[0].rotation;
+	particlePool[index].position = emitParticleInfo[0].originPos;
+	SetDefaultScale(index, randKey);
+	SetSubframe(index, id);	
+}
+
 void sphereEmit(uint index, uint3 id) {
 	float2 randKey = float2(index, id.x);
 	float3 dir = normalize(float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), randNP1(randKey, 2.0)));
@@ -68,8 +92,9 @@ void EmitParticle (uint3 id : SV_DispatchThreadID)
 	uint particleId = deadlist.Consume();
 	alivelist.Append(particleId);
 	//InitParticle(particleId, id);
-	sphereEmit(particleId, id);
-
+	//sphereEmit(particleId, id);
+	//coneEmit(particleId, id);
+	boxEmit(particleId, id);
 
 	InterlockedAdd(particleCounter[0].deadlistCount, -1);
 	InterlockedAdd(particleCounter[0].alivelistCount, 1);

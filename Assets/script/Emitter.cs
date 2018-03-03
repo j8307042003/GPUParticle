@@ -30,10 +30,11 @@ struct EmitParticleInfo
     public Vector3 forwardDir;
     public float scaleRandom;
     public Vector3 acceleration;
-    public float pad0;
+    public float coneEmitAngle;
     public Vector3 prevPosition;
     public float pad1;
     public Vector4 rotation;
+    public Vector3 boxEmitSize;
 }
 
 struct ParticleCounter
@@ -67,6 +68,10 @@ public class Emitter : MonoBehaviour {
     [Range(0.0f, 1.0f)]
     public float scaleRandomness = 0.0f;
     public float radius;
+    [Range(0.0f, 360.0f)]
+    public float coneEmitDegree = 0.0f;
+
+    public Vector3 boxEmitSize;
 
     public Vector3 rotation;
 
@@ -241,8 +246,9 @@ public class Emitter : MonoBehaviour {
         emitInfo.scale = transform.localScale;
         emitInfo.prevPosition = prevPosition;
         emitInfo.radius = radius;
-        //emitInfo.rotation = new Vector4(q.x, q.y, q.z, q.w);0.0f, 0.0f, 5.0f, 1.0f
+        emitInfo.coneEmitAngle = Mathf.Deg2Rad * coneEmitDegree;
         emitInfo.rotation.Set(q.x, q.y, q.z, q.w);
+        emitInfo.boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
         EmitParticleInfo[] emitInfoParam = new EmitParticleInfo[] { emitInfo };
         emitParticleInfoCB.SetData(emitInfoParam);
 

@@ -27,11 +27,11 @@ struct EmitParticleInfo
 	float3 forwardDir;
 	float scaleRandom;
 	float3 acceleration;
-	float pad0;
+	float coneEmitAngle;
 	float3 prevPosition;
 	float pad1;
-
 	float4 rotation;
+	float3 boxEmitSize;
 };
 
 struct ParticleCounter{
