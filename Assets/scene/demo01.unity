@@ -241,6 +241,7 @@ MonoBehaviour:
   startVelocity: 30
   acceleration: {x: 0, y: -9.8, z: 0}
   scaleRandomness: 0.632
+  emitKind: 0
   radius: 5.87
   coneEmitDegree: 0
   boxEmitSize: {x: 0, y: 0, z: 0}
@@ -344,6 +345,7 @@ MonoBehaviour:
   startVelocity: 1.5
   acceleration: {x: 0, y: 0.8, z: 0}
   scaleRandomness: 0.632
+  emitKind: 3
   radius: 5.87
   coneEmitDegree: 0
   boxEmitSize: {x: 0, y: 0, z: 0}
@@ -483,10 +485,11 @@ MonoBehaviour:
   startVelocity: 15
   acceleration: {x: 0, y: 0, z: 0}
   scaleRandomness: 0.632
+  emitKind: 1
   radius: 15
   coneEmitDegree: 0
   boxEmitSize: {x: 0, y: 0, z: 0}
-  rotation: {x: 3, y: 4.5, z: 3}
+  rotation: {x: 0, y: 0, z: 0}
   _emitCS:
   - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
   - {fileID: 7200000, guid: 45e93436e5b75cb43bd6959f1a1e31ab, type: 3}
@@ -557,6 +560,7 @@ MonoBehaviour:
   startVelocity: 1.5
   acceleration: {x: 0, y: 0.8, z: 0}
   scaleRandomness: 0.632
+  emitKind: 1
   radius: 15
   coneEmitDegree: 0
   boxEmitSize: {x: 0, y: 0, z: 0}

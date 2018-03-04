@@ -75,14 +75,17 @@ void sphereEmit(uint index, uint3 id) {
 }
 
 void InitParticle(uint index, uint3 id) {
-  float2 uv = float2(index, id.x);
-  float t = id.x / float(emitParticleInfo[0].realEmitCount);
-  //float4 rot = emitParticleInfo[0].rotation;
-  particlePool[index].scale = (randNP1(uv, 0.0) * emitParticleInfo[0].scaleRandom + 1.0)  * emitParticleInfo[0].scale;
-  particlePool[index].lifespan = t * emitParticleInfo[0]._dt;
-  particlePool[index].quaternion = Quaternion();
-  particlePool[index].position = GenVolumePosition(emitParticleInfo[0].originPos - t * (emitParticleInfo[0].originPos - emitParticleInfo[0].prevPosition), emitParticleInfo[0].radius, float3(index, index, 0.0));
-  particlePool[index].velocity = emitParticleInfo[0].startVelocity * emitParticleInfo[0].forwardDir * float3(randNP1(uv, 0.0), randNP1(uv, 1.0), randNP1(uv, 2.0));
+	[call]switch(emitParticleInfo[0].emitKind) {
+    case 1:
+    	sphereEmit(index, id);
+        break;
+    case 2:
+    	coneEmit(index, id);
+        break;
+    case 3:
+    	boxEmit(index, id);
+        break;
+	}
 }
 
 [numthreads(1024,1,1)]
@@ -91,10 +94,7 @@ void EmitParticle (uint3 id : SV_DispatchThreadID)
   if (id.x < emitParticleInfo[0].realEmitCount) {
 	uint particleId = deadlist.Consume();
 	alivelist.Append(particleId);
-	//InitParticle(particleId, id);
-	//sphereEmit(particleId, id);
-	//coneEmit(particleId, id);
-	boxEmit(particleId, id);
+	InitParticle(particleId, id);
 
 	InterlockedAdd(particleCounter[0].deadlistCount, -1);
 	InterlockedAdd(particleCounter[0].alivelistCount, 1);

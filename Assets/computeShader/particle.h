@@ -29,7 +29,7 @@ struct EmitParticleInfo
 	float3 acceleration;
 	float coneEmitAngle;
 	float3 prevPosition;
-	float pad1;
+	int emitKind;
 	float4 rotation;
 	float3 boxEmitSize;
 };
