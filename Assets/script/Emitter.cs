@@ -349,13 +349,17 @@ public class Emitter : MonoBehaviour {
 
     void Update()
     {
+        /*
         _material.SetBuffer(alivelistId, alivelistCB);
         _material.SetBuffer(particlePoolId, particlePoolCB);
-
-
+   */     
+        if (mpb == null) { mpb = new MaterialPropertyBlock(); }
+        mpb.SetBuffer(alivelistId, alivelistCB);
+        mpb.SetBuffer(particlePoolId, particlePoolCB);
+        
         //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, null, UnityEngine.Rendering.ShadowCastingMode.On, true);
-        Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB);
-        //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb);
+        //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB);
+        Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb);
     }
 
 }

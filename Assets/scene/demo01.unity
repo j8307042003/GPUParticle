@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657868, g: 0.49641263, b: 0.57481706, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -242,6 +242,8 @@ MonoBehaviour:
   acceleration: {x: 0, y: -9.8, z: 0}
   scaleRandomness: 0.632
   radius: 5.87
+  coneEmitDegree: 0
+  boxEmitSize: {x: 0, y: 0, z: 0}
   rotation: {x: 0, y: 0, z: 0}
   _emitCS:
   - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
@@ -336,14 +338,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a11cd4854444ecb41b338e2b3cb2f65d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  emitRate: 10000
-  maxParticle: 60000
+  emitRate: 100
+  maxParticle: 6000
   lifespan: 6
   startVelocity: 1.5
   acceleration: {x: 0, y: 0.8, z: 0}
   scaleRandomness: 0.632
   radius: 5.87
-  rotation: {x: 0, y: 0, z: 0}
+  coneEmitDegree: 0
+  boxEmitSize: {x: 0, y: 0, z: 0}
+  rotation: {x: 0.27, y: 0.33, z: 0}
   _emitCS:
   - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
   - {fileID: 7200000, guid: 45e93436e5b75cb43bd6959f1a1e31ab, type: 3}
@@ -480,6 +484,8 @@ MonoBehaviour:
   acceleration: {x: 0, y: 0, z: 0}
   scaleRandomness: 0.632
   radius: 15
+  coneEmitDegree: 0
+  boxEmitSize: {x: 0, y: 0, z: 0}
   rotation: {x: 3, y: 4.5, z: 3}
   _emitCS:
   - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
@@ -519,7 +525,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1901672064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -546,13 +552,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   emitRate: 10000
-  maxParticle: 100000
+  maxParticle: 60000
   lifespan: 6
   startVelocity: 1.5
   acceleration: {x: 0, y: 0.8, z: 0}
   scaleRandomness: 0.632
   radius: 15
-  rotation: {x: 0, y: 0, z: 0}
+  coneEmitDegree: 0
+  boxEmitSize: {x: 0, y: 0, z: 0}
+  rotation: {x: 0.65, y: 0.52, z: 0}
   _emitCS:
   - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
   - {fileID: 7200000, guid: 45e93436e5b75cb43bd6959f1a1e31ab, type: 3}
