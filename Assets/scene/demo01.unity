@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657868, g: 0.49641263, b: 0.57481706, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -207,6 +207,81 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   profile: {fileID: 11400000, guid: d41c224fe7694c74f895918bed67f00f, type: 2}
+--- !u!1 &1232164287
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1232164290}
+  - component: {fileID: 1232164289}
+  - component: {fileID: 1232164288}
+  m_Layer: 0
+  m_Name: GameObject (4)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1232164288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1232164287}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4229162abb8a2854bbddf498d326e26a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 5
+  range: 1
+  length: 80
+--- !u!114 &1232164289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1232164287}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a11cd4854444ecb41b338e2b3cb2f65d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  emitRate: 10000
+  maxParticle: 80000
+  lifespan: 6
+  startVelocity: 0
+  acceleration: {x: 0, y: -2, z: 0}
+  scaleRandomness: 0.632
+  emitKind: 3
+  radius: 15
+  coneEmitDegree: 0
+  boxEmitSize: {x: 200, y: 5, z: 200}
+  rotation: {x: 360, y: 160, z: 180}
+  _emitCS:
+  - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
+  - {fileID: 7200000, guid: 45e93436e5b75cb43bd6959f1a1e31ab, type: 3}
+  - {fileID: 7200000, guid: 011bc41114521d24b880060b23e187ca, type: 3}
+  - {fileID: 7200000, guid: 3b94e2ce3b7636a418595de7fe349fe2, type: 3}
+  - {fileID: 7200000, guid: 875bbcace8e3d1e41ac3885d90602fb7, type: 3}
+  _mesh: {fileID: 4300004, guid: 7977aa2e23a3b4949b0dec50b282bc9b, type: 3}
+  _material: {fileID: 2100000, guid: 31022f3cd21d86843ab31ecc26df1276, type: 2}
+  _debug: 0
+--- !u!4 &1232164290
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1232164287}
+  m_LocalRotation: {x: -0.69809735, y: 0.11251708, z: 0.11251705, w: 0.69809735}
+  m_LocalPosition: {x: -3.84585, y: 7.03, z: -4.88}
+  m_LocalScale: {x: 5.231582, y: 5.2315836, z: 5.2315836}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: -90.00001, y: 0, z: 18.312}
 --- !u!1 &1612759758
 GameObject:
   m_ObjectHideFlags: 0
@@ -345,7 +420,7 @@ MonoBehaviour:
   startVelocity: 1.5
   acceleration: {x: 0, y: 0.8, z: 0}
   scaleRandomness: 0.632
-  emitKind: 3
+  emitKind: 2
   radius: 5.87
   coneEmitDegree: 0
   boxEmitSize: {x: 0, y: 0, z: 0}
@@ -357,7 +432,7 @@ MonoBehaviour:
   - {fileID: 7200000, guid: 3b94e2ce3b7636a418595de7fe349fe2, type: 3}
   - {fileID: 7200000, guid: 875bbcace8e3d1e41ac3885d90602fb7, type: 3}
   _mesh: {fileID: 4300002, guid: 7977aa2e23a3b4949b0dec50b282bc9b, type: 3}
-  _material: {fileID: 2100000, guid: 31022f3cd21d86843ab31ecc26df1276, type: 2}
+  _material: {fileID: 2100000, guid: eb9a8dfc5b00deb43b6110e9537dd9bc, type: 2}
   _debug: 0
 --- !u!4 &1662773574
 Transform:
@@ -453,7 +528,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1901407663
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -479,7 +554,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a11cd4854444ecb41b338e2b3cb2f65d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  emitRate: 600
+  emitRate: 60000
   maxParticle: 100000
   lifespan: 6
   startVelocity: 15
@@ -489,7 +564,7 @@ MonoBehaviour:
   radius: 15
   coneEmitDegree: 0
   boxEmitSize: {x: 0, y: 0, z: 0}
-  rotation: {x: 0, y: 0, z: 0}
+  rotation: {x: 0, y: 1.09, z: 0}
   _emitCS:
   - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
   - {fileID: 7200000, guid: 45e93436e5b75cb43bd6959f1a1e31ab, type: 3}
@@ -528,7 +603,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1901672064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -555,7 +630,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   emitRate: 10000
-  maxParticle: 60000
+  maxParticle: 1000000
   lifespan: 6
   startVelocity: 1.5
   acceleration: {x: 0, y: 0.8, z: 0}

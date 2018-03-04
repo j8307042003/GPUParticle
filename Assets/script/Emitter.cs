@@ -2,20 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
-/*
-struct EmitParticleInfo
-{
-    public uint emitCount;
-    public uint realEmitCount;
-    public float lifespan;
-    public float _dt;
-    public Vector3 scale;
-    public Vector3 originPos;
-    public Vector3 forwardDir;
-    public float startVelocity;
-    public Vector3 acceleration;
-    public float radius;
-}*/
 
 struct EmitParticleInfo
 {
@@ -71,13 +57,14 @@ public class Emitter : MonoBehaviour {
     public float radius;
     [Range(0.0f, 360.0f)]
     public float coneEmitDegree = 0.0f;
-
     public Vector3 boxEmitSize;
-
     public Vector3 rotation;
+    public ComputeShader[] _emitCS = new ComputeShader[5];
+    public Mesh _mesh;
+    public Material _material;
 
-    float emitCount;
-    
+    public bool _debug = false;
+        
     enum ComputeShaderKind
     {
         InitBuffer=0,
@@ -94,12 +81,8 @@ public class Emitter : MonoBehaviour {
         Box=3,
     };
 
-    public ComputeShader[] _emitCS = new ComputeShader[5];
-    public Mesh _mesh;
-    public Material _material;
 
-    public bool _debug = false;
-
+    float emitCount;
     int[] csID = new int[5];
 
     MaterialPropertyBlock mpb;
@@ -119,60 +102,25 @@ public class Emitter : MonoBehaviour {
     int emitParticleInfoId = Shader.PropertyToID("emitParticleInfo") ;
     int particlePoolId = Shader.PropertyToID("particlePool") ;
     int particleCounterId = Shader.PropertyToID("particleCounter") ;
-    int waitDeadId = Shader.PropertyToID("waitDead") ;
     int alivelistSecId = Shader.PropertyToID("alivelistSec") ;
     int instancingArgId = Shader.PropertyToID("instancingArg") ;
     int updateIndirectBufferId = Shader.PropertyToID("updateIndirectBuffer");
 
-
+    
     uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
-    //uint[] deadlist;
-    //uint[] alivelist;
 
     Particle[] particle;
 
     int deadlistCount;
     int alivelistCount;
+    EmitParticleInfo emitInfo;
 
     Vector3 prevPosition;
 
 	// Use this for initialization
 	void Start () {
-        deadlistCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
-        alivelistCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
-        alivelistSecCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
-        emitParticleInfoCB = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(EmitParticleInfo)));
-        particlePoolCB = new ComputeBuffer(maxParticle, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Particle)));
-        particleCounterCB = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ParticleCounter)));
-        instancingArgCB = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
-        updateIndirectCB = new ComputeBuffer(1, 3 * sizeof(uint), ComputeBufferType.IndirectArguments);
-
-
-        //particle = new Particle[maxParticle];
-
-        // IndirectArguments bugs. can't assign to third index.  so set it at first
-        updateIndirectCB.SetData(new uint[3] { 1, 1, 1 });
-        particleCounterCB.SetData(new ParticleCounter[] { new ParticleCounter() });
-        alivelistCB.SetCounterValue(0);
-        deadlistCB.SetCounterValue(0);
-
-        prevPosition = transform.position;
-
-        //deadlist = new uint[maxParticle];
-        //alivelist = new uint[maxParticle];
-
-        csID[(int)ComputeShaderKind.InitBuffer] = _emitCS[(int)ComputeShaderKind.InitBuffer].FindKernel("InitDeadlist");
-        csID[(int)ComputeShaderKind.EmitCount] = _emitCS[(int)ComputeShaderKind.EmitCount].FindKernel("EmitCount");
-        csID[(int)ComputeShaderKind.EmitParticle] = _emitCS[(int)ComputeShaderKind.EmitParticle].FindKernel("EmitParticle");
-        csID[(int)ComputeShaderKind.UpdateParticle] = _emitCS[(int)ComputeShaderKind.UpdateParticle].FindKernel("UpdateParticle");
-        csID[(int)ComputeShaderKind.SetDrawBufferArg] = _emitCS[(int)ComputeShaderKind.SetDrawBufferArg].FindKernel("SetDrawBufferArg");
-
-        /*
-        particlePoolCB.SetData(particle);
-        alivelistCB.SetData(alivelist);
-        deadlistCB.SetData(deadlist);
-        */
-        InitDeadList();
+        InitBuffer();
+        emitInfo = new EmitParticleInfo();
     }
 
     void OnEnable()
@@ -181,6 +129,12 @@ public class Emitter : MonoBehaviour {
     }
 
     void OnDestroy()
+    {
+        DisposeBuffer();
+    }
+
+
+    void DisposeBuffer()
     {
         deadlistCB.Dispose();
         alivelistCB.Dispose();
@@ -192,8 +146,38 @@ public class Emitter : MonoBehaviour {
         updateIndirectCB.Dispose();
     }
 
+    void InitBuffer()
+    {
+        deadlistCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
+        alivelistCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
+        alivelistSecCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
+        emitParticleInfoCB = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(EmitParticleInfo)));
+        particlePoolCB = new ComputeBuffer(maxParticle, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Particle)));
+        particleCounterCB = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ParticleCounter)));
+        instancingArgCB = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
+        updateIndirectCB = new ComputeBuffer(1, 3 * sizeof(uint), ComputeBufferType.IndirectArguments);
 
-    void InitDeadList()
+
+
+        // can't assign to third index of IndirectArguments buffer.  so set it at first
+        updateIndirectCB.SetData(new uint[3] { 1, 1, 1 });
+        particleCounterCB.SetData(new ParticleCounter[] { new ParticleCounter() });
+        alivelistCB.SetCounterValue(0);
+        deadlistCB.SetCounterValue(0);
+
+
+
+        csID[(int)ComputeShaderKind.InitBuffer] = _emitCS[(int)ComputeShaderKind.InitBuffer].FindKernel("InitDeadlist");
+        csID[(int)ComputeShaderKind.EmitCount] = _emitCS[(int)ComputeShaderKind.EmitCount].FindKernel("EmitCount");
+        csID[(int)ComputeShaderKind.EmitParticle] = _emitCS[(int)ComputeShaderKind.EmitParticle].FindKernel("EmitParticle");
+        csID[(int)ComputeShaderKind.UpdateParticle] = _emitCS[(int)ComputeShaderKind.UpdateParticle].FindKernel("UpdateParticle");
+        csID[(int)ComputeShaderKind.SetDrawBufferArg] = _emitCS[(int)ComputeShaderKind.SetDrawBufferArg].FindKernel("SetDrawBufferArg");
+
+ 
+        DispatchInitDeadList();         
+    }
+
+    void DispatchInitDeadList()
     {
         ComputeShader cs = _emitCS[(int)ComputeShaderKind.InitBuffer];
         int kernelId = csID[(int)ComputeShaderKind.InitBuffer];
@@ -201,8 +185,6 @@ public class Emitter : MonoBehaviour {
         cs.SetBuffer(kernelId, deadlistId, deadlistCB);
         cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
         cs.Dispatch(kernelId, maxParticle, 1, 1);
-
-        //deadlistCB.GetData(deadlist);
     }
 
     int GetBufferCount(ComputeBuffer cb)
@@ -234,15 +216,10 @@ public class Emitter : MonoBehaviour {
         b = tmp;
     }
 
-    // Update is called once per frame
-    void FixedUpdate() {
-        emitCount += emitRate * Time.deltaTime;
-
-        ComputeShader cs;
-        int kernelId;
+    void SetEmitInfoBuffer()
+    {
         // setting emitter Data
         Quaternion q = Quaternion.Euler(rotation);
-        EmitParticleInfo emitInfo = new EmitParticleInfo();
         emitInfo.emitCount = (uint)emitCount;
         emitInfo.lifespan = lifespan;
         emitInfo._dt = Time.deltaTime;
@@ -255,39 +232,48 @@ public class Emitter : MonoBehaviour {
         emitInfo.prevPosition = prevPosition;
         emitInfo.radius = radius;
         emitInfo.coneEmitAngle = Mathf.Deg2Rad * coneEmitDegree;
-        emitInfo.rotation.Set(q.x, q.y, q.z, q.w);
+        emitInfo.rotation.Set(rotation.x, rotation.y, rotation.z, q.w);
         emitInfo.emitKind = (int)emitKind;
         emitInfo.boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
         EmitParticleInfo[] emitInfoParam = new EmitParticleInfo[] { emitInfo };
         emitParticleInfoCB.SetData(emitInfoParam);
+    }
 
-
+    void DispatchEmitCount()
+    {
+        ComputeShader cs;
+        int kernelId;
         cs = _emitCS[(int)ComputeShaderKind.EmitCount];
         kernelId = csID[(int)ComputeShaderKind.EmitCount];
         cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
         cs.SetBuffer(kernelId, emitParticleInfoId, emitParticleInfoCB);
         cs.SetBuffer(kernelId, updateIndirectBufferId, updateIndirectCB);
         cs.Dispatch(kernelId, 1, 1, 1);
+    }
 
-        // Stage 1 Emit Particle
-        if (emitInfo.emitCount > 0)
-        {
-            cs = _emitCS[(int)ComputeShaderKind.EmitParticle];
-            kernelId = csID[(int)ComputeShaderKind.EmitParticle];
-            cs.SetBuffer(kernelId, emitParticleInfoId, emitParticleInfoCB);
-            cs.SetBuffer(kernelId, deadlistId, deadlistCB);
-            cs.SetBuffer(kernelId, alivelistId, alivelistCB);
-            cs.SetBuffer(kernelId, particlePoolId, particlePoolCB);
-            cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
-            cs.Dispatch(kernelId, (int)Mathf.Ceil(emitInfo.emitCount / 1024.0f), 1, 1);
-        }
+    void DispatchEmitParticle()
+    {
+        ComputeShader cs;
+        int kernelId;
+        cs = _emitCS[(int)ComputeShaderKind.EmitParticle];
+        kernelId = csID[(int)ComputeShaderKind.EmitParticle];
+        cs.SetBuffer(kernelId, emitParticleInfoId, emitParticleInfoCB);
+        cs.SetBuffer(kernelId, deadlistId, deadlistCB);
+        cs.SetBuffer(kernelId, alivelistId, alivelistCB);
+        cs.SetBuffer(kernelId, particlePoolId, particlePoolCB);
+        cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
+        cs.Dispatch(kernelId, (int)Mathf.Ceil(emitInfo.emitCount / 1024.0f), 1, 1);
+    }
 
+    void DispatchUpdateParticle()
+    {
+        ComputeShader cs;
+        int kernelId;
         uint numIndices = (_mesh != null) ? (uint)_mesh.GetIndexCount(0) : 0;
         args[0] = numIndices;
         args[1] = 0;
         instancingArgCB.SetData(args);
 
-        // Stage 2 Update Particle
         cs = _emitCS[(int)ComputeShaderKind.UpdateParticle];
         alivelistSecCB.SetCounterValue(0);
         kernelId = csID[(int)ComputeShaderKind.UpdateParticle];
@@ -299,21 +285,35 @@ public class Emitter : MonoBehaviour {
         cs.SetBuffer(kernelId, alivelistSecId, alivelistSecCB);
         cs.SetBuffer(kernelId, instancingArgId, instancingArgCB);
         cs.DispatchIndirect(kernelId, updateIndirectCB, 0);
-        
-        // Swap alive list
-        SwapCB(ref alivelistCB, ref alivelistSecCB);
+    }
 
-
-        
+    void DispatchDrawArg()
+    {
+        ComputeShader cs;
+        int kernelId;
         cs = _emitCS[(int)ComputeShaderKind.SetDrawBufferArg];
         kernelId = csID[(int)ComputeShaderKind.SetDrawBufferArg];
         cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
         cs.SetBuffer(kernelId, instancingArgId, instancingArgCB);
         cs.Dispatch(kernelId, 1, 1, 1);
-        
-        
+    }
+
+    void FixedUpdate() {
+        emitCount += emitRate * Time.deltaTime;
+
+        SetEmitInfoBuffer();
+        DispatchEmitCount();    
+        if (emitInfo.emitCount > 0) DispatchEmitParticle();
+        DispatchUpdateParticle();        
+        SwapCB(ref alivelistCB, ref alivelistSecCB); // Swap alive list
+        DispatchDrawArg();
+
+
+
+        /*
         if (_debug)
         {
+            EmitParticleInfo[] emitInfoParam = new EmitParticleInfo[] { emitInfo };
             ParticleCounter[] particleC = new ParticleCounter[] { new ParticleCounter() };
             uint[] arg = new uint[5] { 0, 0, 0, 0, 0 };
             uint[] indirectB = new uint[3];
@@ -331,27 +331,8 @@ public class Emitter : MonoBehaviour {
             updateIndirectCB.GetData(indirectB);
             emitParticleInfoCB.GetData(emitInfoParam);
             ;
-        }
+        }*/
 
-        
-
-        // Render Particle
-
-        //particlePoolCB.GetData(particle);
-        /* borken in unity  2017.3.0f3
-        if (mpb == null) { mpb = new MaterialPropertyBlock();}
-        mpb.SetBuffer("alivelist", alivelistCB);
-        mpb.SetBuffer("particlePool", particlePoolCB);
-        *//*
-        _material.SetBuffer(alivelistId, alivelistCB);
-        _material.SetBuffer(particlePoolId, particlePoolCB);
-
-
-        //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, null, UnityEngine.Rendering.ShadowCastingMode.On, true);
-        Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB);
-        //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb);
-
-    */
         prevPosition = transform.position;
         emitCount -= (uint)emitCount;
 	}
@@ -361,7 +342,8 @@ public class Emitter : MonoBehaviour {
         /*
         _material.SetBuffer(alivelistId, alivelistCB);
         _material.SetBuffer(particlePoolId, particlePoolCB);
-   */     
+        */
+        
         if (mpb == null) { mpb = new MaterialPropertyBlock(); }
         mpb.SetBuffer(alivelistId, alivelistCB);
         mpb.SetBuffer(particlePoolId, particlePoolCB);

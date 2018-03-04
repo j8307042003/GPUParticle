@@ -24,12 +24,6 @@ float randNP1(float2 co, float offset) {
 	return rand(co, offset) * 2 - 1;
 }
 
-float3 GenVolumePosition(float3 originPos, float radius, float3 id) {
-
-
-	return originPos + float3(radius * rand(id.xy, 0.0), radius * rand(id.xy, 1.0), radius * rand(id.xy, 2.0));
-}
-
 void SetSubframe(uint index, uint3 id) {
 	float t = id.x / float(emitParticleInfo[0].realEmitCount);
 	particlePool[index].lifespan = t * emitParticleInfo[0]._dt;
@@ -45,7 +39,7 @@ void boxEmit(uint index, uint3 id) {
 	float2 randKey = float2(index, id.x);
 	float3 posOffset = float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), randNP1(randKey, 2.0)) * emitParticleInfo[0].boxEmitSize;
 	particlePool[index].velocity = emitParticleInfo[0].startVelocity * emitParticleInfo[0].forwardDir;
-	particlePool[index].quaternion = emitParticleInfo[0].rotation;
+	particlePool[index].quaternion = Quaternion(); //emitParticleInfo[0].rotation;
 	particlePool[index].position = emitParticleInfo[0].originPos + posOffset;
 	SetDefaultScale(index, randKey);
 	SetSubframe(index, id);	
@@ -58,7 +52,7 @@ void coneEmit(uint index, uint3 id) {
 	float4 rot = Quaternion( normalize(float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), 0.0)), randAngle);
 	float3 dir = rotate_vector(emitParticleInfo[0].forwardDir, rot);
 	particlePool[index].velocity = emitParticleInfo[0].startVelocity * dir;
-	particlePool[index].quaternion = emitParticleInfo[0].rotation;
+	particlePool[index].quaternion = Quaternion();// emitParticleInfo[0].rotation;
 	particlePool[index].position = emitParticleInfo[0].originPos;
 	SetDefaultScale(index, randKey);
 	SetSubframe(index, id);	
@@ -68,8 +62,8 @@ void sphereEmit(uint index, uint3 id) {
 	float2 randKey = float2(index, id.x);
 	float3 dir = normalize(float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), randNP1(randKey, 2.0)));
 	particlePool[index].velocity = emitParticleInfo[0].startVelocity * dir;
-	particlePool[index].quaternion = emitParticleInfo[0].rotation;
-	particlePool[index].position = emitParticleInfo[0].originPos;
+	particlePool[index].quaternion = Quaternion();// emitParticleInfo[0].rotation;
+	particlePool[index].position = emitParticleInfo[0].originPos + dir * emitParticleInfo[0].radius;
 	SetDefaultScale(index, randKey);
 	SetSubframe(index, id);
 }

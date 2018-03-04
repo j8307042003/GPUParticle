@@ -8,11 +8,14 @@
 AppendStructuredBuffer<uint> deadlist;
 RWStructuredBuffer<ParticleCounter> particleCounter;
 
+uint maxParticle;
 
 [numthreads(1,1,1)]
 void InitDeadlist (uint3 id : SV_DispatchThreadID)
 {
-  deadlist.Append(id.x);
-  uint idx;
-  InterlockedAdd(particleCounter[0].deadlistCount, 1, idx);
+
+	deadlist.Append(id.x);
+	uint idx;
+	InterlockedAdd(particleCounter[0].deadlistCount, 1, idx);
+
 }
