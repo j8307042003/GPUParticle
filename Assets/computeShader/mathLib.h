@@ -1,4 +1,5 @@
 // Helper Library compute shader
+#define M_PI 3.1415926535
 
 
 float4 Quaternion( float3 axis, float angle ) {
@@ -16,23 +17,15 @@ float4 Quaternion() {
 	return float4(0.0, 0.0, 0.0, 1.0);
 }
 
-float4 EulerToQuaternion(float3 euler)
+float3 AxisRotateByQuaternion(float3 axis, float4 q)
 {
-	float4 q;
-        // Abbreviations for the various angular functions
-	float cy = cos(euler.y * 0.5);
-	float sy = sin(euler.y * 0.5);
-	float cr = cos(euler.z * 0.5);
-	float sr = sin(euler.z * 0.5);
-	float cp = cos(euler.x * 0.5);
-	float sp = sin(euler.x * 0.5);
-
-	q.w = cy * cr * cp + sy * sr * sp;
-	q.x = cy * sr * cp - sy * cr * sp;
-	q.y = cy * cr * sp + sy * sr * cp;
-	q.z = sy * cr * cp - cy * sr * sp;
-	return q;
+	float3 v = float3(q.x, q.y, q.z);
+	return
+		(2.0f * q.w * q.w - 1.0f) * axis
+		+ 2.0f * dot(v, axis) * v
+		+ 2.0f * q.w * cross(v, axis);
 }
+
 
 float4 InvertQuternion(float4 quaternion) {
 	return Quaternion(quaternion.w, quaternion.x, quaternion.y, quaternion.z);

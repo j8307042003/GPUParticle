@@ -1,19 +1,4 @@
 
-
-//struct EmitParticleInfo
-//{
-   // uint emitCount;
- //   uint realEmitCount;
-//	float lifespan;
- //   float _dt;	
-//	float3 scale;
-//	float3 originPos;
-//	float3 forwardDir;
-//	float startVelocity;
-//	float3 acceleration;
-//	float radius;
-//};
-
 struct EmitParticleInfo
 {
 	uint emitCount;
@@ -24,7 +9,7 @@ struct EmitParticleInfo
 	float startVelocity;
 	float3 originPos;
 	float radius;
-	float3 forwardDir;
+	float4 emitterRot;
 	float scaleRandom;
 	float3 acceleration;
 	float coneEmitAngle;

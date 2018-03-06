@@ -13,7 +13,7 @@ struct EmitParticleInfo
     public float startVelocity;
     public Vector3 originPos;
     public float radius;
-    public Vector3 forwardDir;
+    public Quaternion emitterRot;
     public float scaleRandom;
     public Vector3 acceleration;
     public float coneEmitAngle;
@@ -105,7 +105,7 @@ public class Emitter : MonoBehaviour {
     int alivelistSecId = Shader.PropertyToID("alivelistSec") ;
     int instancingArgId = Shader.PropertyToID("instancingArg") ;
     int updateIndirectBufferId = Shader.PropertyToID("updateIndirectBuffer");
-
+    int timeId = Shader.PropertyToID("time");
     
     uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
 
@@ -225,7 +225,7 @@ public class Emitter : MonoBehaviour {
         emitInfo._dt = Time.deltaTime;
         emitInfo.scaleRandom = scaleRandomness;
         emitInfo.originPos = transform.position;
-        emitInfo.forwardDir = transform.forward;
+        emitInfo.emitterRot = transform.rotation;
         emitInfo.startVelocity = startVelocity;
         emitInfo.acceleration = acceleration;
         emitInfo.scale = transform.localScale;
@@ -262,6 +262,7 @@ public class Emitter : MonoBehaviour {
         cs.SetBuffer(kernelId, alivelistId, alivelistCB);
         cs.SetBuffer(kernelId, particlePoolId, particlePoolCB);
         cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
+        cs.SetFloat(timeId, Time.time);
         cs.Dispatch(kernelId, (int)Mathf.Ceil(emitInfo.emitCount / 1024.0f), 1, 1);
     }
 
