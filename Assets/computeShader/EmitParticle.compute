@@ -50,11 +50,11 @@ void boxEmit(uint index, uint3 id) {
 void coneEmit(uint index, uint3 id) {
 	float2 randKey = float2(index/1024.0*time, time);
 	float randAngle = rand(randKey, 2.0) * (emitParticleInfo[0].coneEmitAngle * 0.5);
-	float3 revX = AxisRotateByQuaternion(float3(1.0, 0.0, 0.0), emitParticleInfo[0].emitterRot);
-	float3 revY = AxisRotateByQuaternion(float3(0.0, 1.0, 0.0), emitParticleInfo[0].emitterRot);
-	float3 revZ = AxisRotateByQuaternion(float3(0.0, 0.0, 1.0), emitParticleInfo[0].emitterRot);
-	float4 rot = NormalizeQuaternion(Quaternion( normalize(revX * randNP1(randKey, 0.0) + revY * randNP1(randKey, 1.0)), randAngle));
-	float3 dir = normalize(AxisRotateByQuaternion(revZ, rot));
+	float3 right = AxisRotateByQuaternion(float3(1.0, 0.0, 0.0), emitParticleInfo[0].emitterRot);
+	float3 up = AxisRotateByQuaternion(float3(0.0, 1.0, 0.0), emitParticleInfo[0].emitterRot);
+	float3 forward = AxisRotateByQuaternion(float3(0.0, 0.0, 1.0), emitParticleInfo[0].emitterRot);
+	float4 rot = NormalizeQuaternion(Quaternion( normalize(right * randNP1(randKey, 0.0) + up * randNP1(randKey, 1.0)), randAngle));
+	float3 dir = normalize(AxisRotateByQuaternion(forward, rot));
 	particlePool[index].velocity = emitParticleInfo[0].startVelocity * dir;
 	particlePool[index].quaternion = Quaternion();// emitParticleInfo[0].rotation;
 	particlePool[index].position = emitParticleInfo[0].originPos;
