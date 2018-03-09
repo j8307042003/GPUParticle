@@ -19,19 +19,10 @@
 		#pragma instancing_options procedural:setup
 
 		#include "UnityInstancing.cginc"
+		#include "particle.h"
 		#include "UnityCG.cginc"
 		
 		sampler2D _MainTex;
-
-		struct Particle {
-			float lifespan;
-			float3 position;
-			float3 velocity;
-			float4x4 model;
-			float3 scale;
-			float4 quaternion;
-			uint id;
-		};
 
 		struct Input {
 			float2 uv_MainTex;

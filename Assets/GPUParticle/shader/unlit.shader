@@ -23,15 +23,7 @@ Shader "GPUParticle/Unlit"
 			#pragma multi_compile_instancing
 			#pragma target 4.5
 
-			struct Particle {
-			float lifespan;
-			float3 position;
-			float3 velocity;
-			float4x4 model;
-			float3 scale;
-			float4 quaternion;
-			};
-
+			#include "particle.h"
 			#include "UnityCG.cginc"
 
 			struct appdata

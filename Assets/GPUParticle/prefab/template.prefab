@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 1341811633987702}
+  m_IsPrefabParent: 1
+--- !u!1 &1341811633987702
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 4888800442171440}
+  - component: {fileID: 114547414897037564}
+  m_Layer: 0
+  m_Name: template
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4888800442171440
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1341811633987702}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114547414897037564
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1341811633987702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a11cd4854444ecb41b338e2b3cb2f65d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  emitRate: 1
+  maxParticle: 10
+  lifespan: 1
+  startVelocity: 10
+  startVelocityRandomness: 0
+  acceleration: {x: 0, y: 0, z: 0}
+  scaleRandomness: 0
+  emitKind: 2
+  radius: 15
+  coneEmitDegree: 0
+  boxEmitSize: {x: 0, y: 0, z: 0}
+  rotation: {x: 0, y: 0, z: 0}
+  _emitCS:
+  - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
+  - {fileID: 7200000, guid: 45e93436e5b75cb43bd6959f1a1e31ab, type: 3}
+  - {fileID: 7200000, guid: 011bc41114521d24b880060b23e187ca, type: 3}
+  - {fileID: 7200000, guid: 3b94e2ce3b7636a418595de7fe349fe2, type: 3}
+  - {fileID: 7200000, guid: 875bbcace8e3d1e41ac3885d90602fb7, type: 3}
+  _mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  _material: {fileID: 2100000, guid: 4bf6869a14c9e1149a5d6f6401846b6c, type: 2}
+  receiveShadow: 1
+  castShadow: 1
+  _debug: 0

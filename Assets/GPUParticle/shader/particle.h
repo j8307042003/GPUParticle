@@ -34,7 +34,6 @@ struct Particle {
 	float4x4 model;
 	float3 scale;
 	float4 quaternion;
-	uint id;
 };
 
 struct IndirectArgumentBuffer

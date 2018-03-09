@@ -40,7 +40,6 @@ struct Particle
     public Matrix4x4 model;
     public Vector3 scale;
     public Vector4 quaternion;
-    public uint id;
 }
 
 
