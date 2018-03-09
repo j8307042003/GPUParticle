@@ -1,4 +1,4 @@
-﻿Shader "Unlit/diffuse"
+﻿Shader "GPUParticle/diffuse"
 {
 	Properties
 	{

@@ -1,6 +1,6 @@
 ﻿// Upgrade NOTE: replaced 'UNITY_INSTANCE_ID' with 'UNITY_VERTEX_INPUT_INSTANCE_ID'
 
-Shader "Unlit/GPU_01"
+Shader "GPUParticle/Unlit"
 {
 	Properties
 	{
