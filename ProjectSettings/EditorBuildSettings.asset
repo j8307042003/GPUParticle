@@ -6,5 +6,5 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/GPUParticle/scene/rock.unity
-    guid: d0dd0e66600c19f41acda1b061fd9405
+    path: Assets/GPUParticle/scene/leaf.unity
+    guid: 24e79b532984229438aceef2dc44a0c4
