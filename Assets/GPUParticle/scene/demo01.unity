@@ -295,7 +295,7 @@ MonoBehaviour:
   maxParticle: 50000
   lifespan: 6
   startVelocity: 70
-  startVelocityRandomness: 0
+  startVelocityRandomness: 0.205
   acceleration: {x: 0, y: -15, z: 0}
   scaleRandomness: 0.632
   emitKind: 2
@@ -309,7 +309,7 @@ MonoBehaviour:
   - {fileID: 7200000, guid: 011bc41114521d24b880060b23e187ca, type: 3}
   - {fileID: 7200000, guid: 3b94e2ce3b7636a418595de7fe349fe2, type: 3}
   - {fileID: 7200000, guid: 875bbcace8e3d1e41ac3885d90602fb7, type: 3}
-  _mesh: {fileID: 4300004, guid: d156dcf56f86f404393203fbed35c031, type: 3}
+  _mesh: {fileID: 4300002, guid: 7977aa2e23a3b4949b0dec50b282bc9b, type: 3}
   _material: {fileID: 2100000, guid: 4bf6869a14c9e1149a5d6f6401846b6c, type: 2}
   receiveShadow: 1
   castShadow: 1

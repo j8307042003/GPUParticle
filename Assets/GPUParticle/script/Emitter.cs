@@ -316,7 +316,7 @@ public class Emitter : MonoBehaviour {
         DispatchDrawArg();
 
 
-
+        /*
         
         if (_debug)
         {
@@ -338,7 +338,7 @@ public class Emitter : MonoBehaviour {
             updateIndirectCB.GetData(indirectB);
             emitParticleInfoCB.GetData(emitInfoParam);
             ;
-        }
+        }*/
 
         prevPosition = transform.position;
         emitCount -= (uint)emitCount;
