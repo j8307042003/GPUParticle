@@ -11,6 +11,7 @@ struct EmitParticleInfo
     public float _dt;
     public Vector3 scale;
     public float startVelocity;
+    public float startVelocityRandomness;
     public Vector3 originPos;
     public float radius;
     public Quaternion emitterRot;
@@ -19,7 +20,7 @@ struct EmitParticleInfo
     public float coneEmitAngle;
     public Vector3 prevPosition;
     public int emitKind;
-    public Vector4 rotation;
+    public Vector3 angularSpeed;
     public Vector3 boxEmitSize;
 }
 
@@ -39,6 +40,7 @@ struct Particle
     public Matrix4x4 model;
     public Vector3 scale;
     public Vector4 quaternion;
+    public uint id;
 }
 
 
@@ -50,6 +52,8 @@ public class Emitter : MonoBehaviour {
     public int maxParticle;
     public float lifespan;
     public float startVelocity;
+    [Range(0.0f, 1.0f)]
+    public float startVelocityRandomness = 0.0f;
     public Vector3 acceleration;
     [Range(0.0f, 1.0f)]
     public float scaleRandomness = 0.0f;
@@ -62,6 +66,9 @@ public class Emitter : MonoBehaviour {
     public ComputeShader[] _emitCS = new ComputeShader[5];
     public Mesh _mesh;
     public Material _material;
+
+    public bool receiveShadow = false;
+    public bool castShadow = false;
 
     public bool _debug = false;
         
@@ -219,20 +226,20 @@ public class Emitter : MonoBehaviour {
     void SetEmitInfoBuffer()
     {
         // setting emitter Data
-        Quaternion q = Quaternion.Euler(rotation);
         emitInfo.emitCount = (uint)emitCount;
         emitInfo.lifespan = lifespan;
         emitInfo._dt = Time.deltaTime;
         emitInfo.scaleRandom = scaleRandomness;
         emitInfo.originPos = transform.position;
         emitInfo.emitterRot = transform.rotation;
-        emitInfo.startVelocity = startVelocity;
+        emitInfo.startVelocity = startVelocity ;
+        emitInfo.startVelocityRandomness = startVelocityRandomness;
         emitInfo.acceleration = acceleration;
         emitInfo.scale = transform.localScale;
         emitInfo.prevPosition = prevPosition;
         emitInfo.radius = radius;
         emitInfo.coneEmitAngle = Mathf.Deg2Rad * coneEmitDegree;
-        emitInfo.rotation.Set(rotation.x, rotation.y, rotation.z, q.w);
+        emitInfo.angularSpeed.Set(rotation.x, rotation.y, rotation.z);
         emitInfo.emitKind = (int)emitKind;
         emitInfo.boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
         EmitParticleInfo[] emitInfoParam = new EmitParticleInfo[] { emitInfo };
@@ -311,7 +318,7 @@ public class Emitter : MonoBehaviour {
 
 
 
-        /*
+        
         if (_debug)
         {
             EmitParticleInfo[] emitInfoParam = new EmitParticleInfo[] { emitInfo };
@@ -332,7 +339,7 @@ public class Emitter : MonoBehaviour {
             updateIndirectCB.GetData(indirectB);
             emitParticleInfoCB.GetData(emitInfoParam);
             ;
-        }*/
+        }
 
         prevPosition = transform.position;
         emitCount -= (uint)emitCount;
@@ -344,14 +351,13 @@ public class Emitter : MonoBehaviour {
         _material.SetBuffer(alivelistId, alivelistCB);
         _material.SetBuffer(particlePoolId, particlePoolCB);
         */
-        
         if (mpb == null) { mpb = new MaterialPropertyBlock(); }
         mpb.SetBuffer(alivelistId, alivelistCB);
         mpb.SetBuffer(particlePoolId, particlePoolCB);
         
-        //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, null, UnityEngine.Rendering.ShadowCastingMode.On, true);
+        Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb, castShadow ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off, receiveShadow );
         //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB);
-        Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb);
+        //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb);
     }
 
 }

@@ -7,6 +7,7 @@ struct EmitParticleInfo
 	float _dt;
 	float3 scale;
 	float startVelocity;
+	float startVelocityRandomness;
 	float3 originPos;
 	float radius;
 	float4 emitterRot;
@@ -15,8 +16,9 @@ struct EmitParticleInfo
 	float coneEmitAngle;
 	float3 prevPosition;
 	int emitKind;
-	float4 rotation;
+	float3 angularSpeed;
 	float3 boxEmitSize;
+	
 };
 
 struct ParticleCounter{
@@ -32,6 +34,7 @@ struct Particle {
 	float4x4 model;
 	float3 scale;
 	float4 quaternion;
+	uint id;
 };
 
 struct IndirectArgumentBuffer

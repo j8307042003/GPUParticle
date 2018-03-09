@@ -23,6 +23,9 @@ public class EmitterEditor : Editor {
     SerializedProperty _mesh;
     SerializedProperty _material;
     SerializedProperty _debug;
+    SerializedProperty receiveShadow;
+    SerializedProperty castShadow;
+    SerializedProperty startVelocityRandomness;
 
     void OnEnable()
     {
@@ -41,8 +44,10 @@ public class EmitterEditor : Editor {
 		_emitCS = serializedObject.FindProperty("_emitCS");
 		_mesh = serializedObject.FindProperty("_mesh");
 		_material = serializedObject.FindProperty("_material");
-		_debug = serializedObject.FindProperty("_debug");		
-
+		_debug = serializedObject.FindProperty("_debug");
+        receiveShadow = serializedObject.FindProperty("receiveShadow");
+        castShadow = serializedObject.FindProperty("castShadow");
+        startVelocityRandomness = serializedObject.FindProperty("startVelocityRandomness");
     }
 
     public override void OnInspectorGUI()
@@ -54,6 +59,8 @@ public class EmitterEditor : Editor {
 		EditorGUILayout.PropertyField(lifespan);
 		GUILayout.Label ("Speed", EditorStyles.boldLabel);
 		EditorGUILayout.PropertyField(startVelocity);
+        EditorGUILayout.PropertyField(startVelocityRandomness);
+
 		EditorGUILayout.PropertyField(acceleration);
 
 		GUILayout.Label ("Scale", EditorStyles.boldLabel);
@@ -84,7 +91,12 @@ public class EmitterEditor : Editor {
 		GUILayout.Label ("Emit Object", EditorStyles.boldLabel);		
 		EditorGUILayout.PropertyField(_mesh);
 		EditorGUILayout.PropertyField(_material);
-		EditorGUILayout.PropertyField(_debug);
+
+        EditorGUILayout.PropertyField(receiveShadow);
+        EditorGUILayout.PropertyField(castShadow);
+
+
+        EditorGUILayout.PropertyField(_debug);
         serializedObject.ApplyModifiedProperties();
     }
 }

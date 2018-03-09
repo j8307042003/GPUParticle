@@ -17,6 +17,18 @@ RWStructuredBuffer<ParticleCounter> particleCounter;
 RWStructuredBuffer<Particle> particlePool;
 RWStructuredBuffer<uint> instancingArg;
 
+float time;
+
+float rand(float2 co, float offset) {
+	co += float2(offset, offset);
+
+	return frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+float randNP1(float2 co, float offset) {
+	return rand(co, offset) * 2.0 - 1.0;
+}
+
 [numthreads(1024,1,1)]
 void UpdateParticle (uint3 id : SV_DispatchThreadID)
 {
@@ -27,22 +39,20 @@ void UpdateParticle (uint3 id : SV_DispatchThreadID)
 	particle.velocity += emitParticleInfo[0].acceleration * emitParticleInfo[0]._dt;
 	particle.lifespan += emitParticleInfo[0]._dt;
 	particle.position += particle.velocity * emitParticleInfo[0]._dt;
-	//particle.quaternion = qmul(particle.quaternion, Quaternion(float3(55.0, 45.0, 45.0), 1.0));
+
 	if ( particle.lifespan  > emitParticleInfo[0].lifespan ){
 	  deadlist.Append(particleId);
 
 	  InterlockedAdd(particleCounter[0].deadlistCount, 1);
 	  InterlockedAdd(particleCounter[0].alivelistCount, -1);
 	}else{
-	  //InterlockedAdd(instancingArg[1], 1);
 	  alivelistSec.Append(particleId);
 
 	}
 
-	float magnitude = length(emitParticleInfo[0].rotation.xyz)*0.01745;
-	float4 deltaRot = Quaternion(normalize(emitParticleInfo[0].rotation.xyz), magnitude*emitParticleInfo[0]._dt);
+	float magnitude = length(emitParticleInfo[0].angularSpeed)*0.01745;
+	float4 deltaRot = Quaternion(magnitude > 0.0 ? normalize(emitParticleInfo[0].angularSpeed) : float3(0.0, 0.0, 0.0), magnitude*emitParticleInfo[0]._dt * rand(float2(id.x, time), 0.0) );
 
-	//float4 deltaRot = QSlerp(emitParticleInfo[0].rotation, Quaternion(), emitParticleInfo[0]._dt);
 	particle.quaternion = qmul(particle.quaternion, deltaRot);
 	particle.quaternion = NormalizeQuaternion(particle.quaternion);
 	float4 q = particle.quaternion;
@@ -71,19 +81,7 @@ void UpdateParticle (uint3 id : SV_DispatchThreadID)
 
 
 	particle.model = mul(trans,mul(rotMat, scale));
-
-	/*
-	
-	particle.model =float4x4(
-		particle.scale.x, 0.0, 0.0, particle.position.x,
-	  0.0, particle.scale.y, 0.0, particle.position.y,
-	  0.0, 0.0, particle.scale.z, particle.position.z,
-	  0.0, 0.0, 0.0, 1.0
-	);
-	*/
-
 	particlePool[particleId] = particle;
-	//particlePool[0] = particle;
   }
 
 }
