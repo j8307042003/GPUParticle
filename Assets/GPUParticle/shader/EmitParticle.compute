@@ -41,8 +41,13 @@ float RandStartVelocity(float2 randKey, float offset) {
 
 void boxEmit(uint index, uint3 id) {
 	float2 randKey = float2(fmod(id.x, emitParticleInfo[0].realEmitCount), time);
+	float3 right = AxisRotateByQuaternion(float3(1.0, 0.0, 0.0), emitParticleInfo[0].emitterRot);
+	float3 up = AxisRotateByQuaternion(float3(0.0, 1.0, 0.0), emitParticleInfo[0].emitterRot);
+	float3 forward = AxisRotateByQuaternion(float3(0.0, 0.0, 1.0), emitParticleInfo[0].emitterRot);
 
-	float3 posOffset = float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), randNP1(randKey, 2.0)) * emitParticleInfo[0].boxEmitSize;
+	//float3 posOffset = float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), randNP1(randKey, 2.0)) * emitParticleInfo[0].boxEmitSize;
+	float3 size = emitParticleInfo[0].boxEmitSize;
+	float3 posOffset = (right * randNP1(randKey, 0.0) * size.x + up * randNP1(randKey, 1.0) * size.y + forward * randNP1(randKey, 2.0) * size.z);
 	particlePool[index].velocity = RandStartVelocity(randKey, 0.4) * AxisRotateByQuaternion(float3(0.0, 0.0, 1.0), emitParticleInfo[0].emitterRot);
 	particlePool[index].quaternion = Quaternion();
 	particlePool[index].position = emitParticleInfo[0].originPos + posOffset;
