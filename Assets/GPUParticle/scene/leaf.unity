@@ -165,7 +165,7 @@ MonoBehaviour:
   emitKind: 3
   radius: 15
   coneEmitDegree: 0
-  boxEmitSize: {x: 200, y: 20, z: 300}
+  boxEmitSize: {x: 200, y: 300, z: 20}
   rotation: {x: 450, y: 600, z: 600}
   _emitCS:
   - {fileID: 7200000, guid: 71afbd191c3228c458686e6b650c5b3e, type: 3}
