@@ -9,7 +9,7 @@ public class EmitterEditor : Editor {
     SerializedProperty emitter;
 
     SerializedProperty emitRate;
-    SerializedProperty maxParticle;
+    SerializedProperty _maxParticle;
     SerializedProperty lifespan;
     SerializedProperty startVelocity;
     SerializedProperty acceleration;
@@ -19,7 +19,6 @@ public class EmitterEditor : Editor {
     SerializedProperty coneEmitDegree;
     SerializedProperty boxEmitSize;
     SerializedProperty rotation;
-    SerializedProperty _emitCS;
     SerializedProperty _mesh;
     SerializedProperty _material;
     SerializedProperty _debug;
@@ -31,7 +30,7 @@ public class EmitterEditor : Editor {
     {
 
         emitRate = serializedObject.FindProperty("emitRate");
-		maxParticle = serializedObject.FindProperty("maxParticle");
+		_maxParticle = serializedObject.FindProperty("_maxParticle");
 		lifespan = serializedObject.FindProperty("lifespan");
 		startVelocity = serializedObject.FindProperty("startVelocity");
 		acceleration = serializedObject.FindProperty("acceleration");
@@ -41,7 +40,6 @@ public class EmitterEditor : Editor {
 		coneEmitDegree = serializedObject.FindProperty("coneEmitDegree");
 		boxEmitSize = serializedObject.FindProperty("boxEmitSize");
 		rotation = serializedObject.FindProperty("rotation");
-		_emitCS = serializedObject.FindProperty("_emitCS");
 		_mesh = serializedObject.FindProperty("_mesh");
 		_material = serializedObject.FindProperty("_material");
 		_debug = serializedObject.FindProperty("_debug");
@@ -52,10 +50,17 @@ public class EmitterEditor : Editor {
 
     public override void OnInspectorGUI()
     {
+        Emitter emitter = target as Emitter;
+
         serializedObject.Update();
 
 		EditorGUILayout.PropertyField(emitRate);
-		EditorGUILayout.PropertyField(maxParticle);
+
+        EditorGUI.BeginChangeCheck();
+		EditorGUILayout.PropertyField(_maxParticle);
+        if (EditorGUI.EndChangeCheck()) { emitter.WantReset(); }
+        
+
 		EditorGUILayout.PropertyField(lifespan);
 		GUILayout.Label ("Speed", EditorStyles.boldLabel);
 		EditorGUILayout.PropertyField(startVelocity);
@@ -84,9 +89,6 @@ public class EmitterEditor : Editor {
 	
 		GUILayout.Label ("Rotation", EditorStyles.boldLabel);	
 		EditorGUILayout.PropertyField(rotation);
-
-		GUILayout.Label ("Compute Shader", EditorStyles.boldLabel);
-		EditorGUILayout.PropertyField(_emitCS, true);
 
 		GUILayout.Label ("Emit Object", EditorStyles.boldLabel);		
 		EditorGUILayout.PropertyField(_mesh);

@@ -46,9 +46,12 @@ struct Particle
 
 
 public class Emitter : MonoBehaviour {
-
+    [SerializeField]
+    int _maxParticle;
     public float emitRate=0;
-    public int maxParticle;
+ 
+    public int maxParticle { get { return _maxParticle; }
+                             set { _maxParticle = value; _reset = true; } }
     public float lifespan;
     public float startVelocity;
     [Range(0.0f, 1.0f)]
@@ -62,23 +65,24 @@ public class Emitter : MonoBehaviour {
     public float coneEmitDegree = 0.0f;
     public Vector3 boxEmitSize;
     public Vector3 rotation;
-    public ComputeShader[] _emitCS = new ComputeShader[5];
+    [SerializeField]
     public Mesh _mesh;
     public Material _material;
-
     public bool receiveShadow = false;
     public bool castShadow = false;
-
     public bool _debug = false;
         
-    enum ComputeShaderKind
-    {
-        InitBuffer=0,
-        EmitCount=1,
-        EmitParticle=2,
-        UpdateParticle=3,
-        SetDrawBufferArg = 4,
-    };
+    public ComputeShader InitBufferCS;
+    public ComputeShader EmitCountCS;
+    public ComputeShader EmitParticleCS;
+    public ComputeShader UpdateParticleCS;
+    public ComputeShader SetDrawBufferArgCS;
+
+    int InitBufferCSID;
+    int EmitCountCSID;
+    int EmitParticleCSID;
+    int UpdateParticleCSID;
+    int SetDrawBufferArgCSID;
 
     public enum EmitKind
     {
@@ -89,7 +93,6 @@ public class Emitter : MonoBehaviour {
 
 
     float emitCount;
-    int[] csID = new int[5];
 
     MaterialPropertyBlock mpb;
 
@@ -103,6 +106,7 @@ public class Emitter : MonoBehaviour {
     ComputeBuffer updateIndirectCB;
 
 
+
     int deadlistId = Shader.PropertyToID("deadlist") ;
     int alivelistId = Shader.PropertyToID("alivelist") ;
     int emitParticleInfoId = Shader.PropertyToID("emitParticleInfo") ;
@@ -114,17 +118,16 @@ public class Emitter : MonoBehaviour {
     int timeId = Shader.PropertyToID("time");
     
     uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
-
-    Particle[] particle;
+    bool _reset = false;
 
     int deadlistCount;
     int alivelistCount;
     EmitParticleInfo emitInfo;
-
     Vector3 prevPosition;
 
 	// Use this for initialization
 	void Start () {
+        LoadDefaultComputeShader();
         InitBuffer();
         emitInfo = new EmitParticleInfo();
     }
@@ -154,43 +157,71 @@ public class Emitter : MonoBehaviour {
 
     void InitBuffer()
     {
-        deadlistCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
-        alivelistCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
-        alivelistSecCB = new ComputeBuffer(maxParticle, sizeof(uint), ComputeBufferType.Append);
+        deadlistCB = new ComputeBuffer(_maxParticle, sizeof(uint), ComputeBufferType.Append);
+        alivelistCB = new ComputeBuffer(_maxParticle, sizeof(uint), ComputeBufferType.Append);
+        alivelistSecCB = new ComputeBuffer(_maxParticle, sizeof(uint), ComputeBufferType.Append);
         emitParticleInfoCB = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(EmitParticleInfo)));
-        particlePoolCB = new ComputeBuffer(maxParticle, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Particle)));
+        particlePoolCB = new ComputeBuffer(_maxParticle, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Particle)));
         particleCounterCB = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(ParticleCounter)));
         instancingArgCB = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
         updateIndirectCB = new ComputeBuffer(1, 3 * sizeof(uint), ComputeBufferType.IndirectArguments);
 
 
 
-        // can't assign to third index of IndirectArguments buffer.  so set it at first
+        // can't assign to third index of IndirectArguments buffer in compute shader somehow.  so set it at first
         updateIndirectCB.SetData(new uint[3] { 1, 1, 1 });
         particleCounterCB.SetData(new ParticleCounter[] { new ParticleCounter() });
         alivelistCB.SetCounterValue(0);
         deadlistCB.SetCounterValue(0);
 
+        InitBufferCSID = InitBufferCS.FindKernel("InitDeadlist");
+        EmitCountCSID = EmitCountCS.FindKernel("EmitCount");
+        EmitParticleCSID = EmitParticleCS.FindKernel("EmitParticle");
+        UpdateParticleCSID = UpdateParticleCS.FindKernel("UpdateParticle");
+        SetDrawBufferArgCSID = SetDrawBufferArgCS.FindKernel("SetDrawBufferArg");
 
 
-        csID[(int)ComputeShaderKind.InitBuffer] = _emitCS[(int)ComputeShaderKind.InitBuffer].FindKernel("InitDeadlist");
-        csID[(int)ComputeShaderKind.EmitCount] = _emitCS[(int)ComputeShaderKind.EmitCount].FindKernel("EmitCount");
-        csID[(int)ComputeShaderKind.EmitParticle] = _emitCS[(int)ComputeShaderKind.EmitParticle].FindKernel("EmitParticle");
-        csID[(int)ComputeShaderKind.UpdateParticle] = _emitCS[(int)ComputeShaderKind.UpdateParticle].FindKernel("UpdateParticle");
-        csID[(int)ComputeShaderKind.SetDrawBufferArg] = _emitCS[(int)ComputeShaderKind.SetDrawBufferArg].FindKernel("SetDrawBufferArg");
+        DispatchInitDeadList();
+        _reset = false;      
+    }
 
- 
-        DispatchInitDeadList();         
+    void LoadDefaultComputeShader()
+    {
+
+        if (InitBufferCS == null) InitBufferCS = Resources.Load<ComputeShader>("shader/InitParticleBuffer");
+        if (EmitCountCS == null) EmitCountCS = Resources.Load<ComputeShader>("shader/EmitCount");
+        if (EmitParticleCS == null) EmitParticleCS = Resources.Load<ComputeShader>("shader/EmitParticle");
+        if (UpdateParticleCS == null) UpdateParticleCS = Resources.Load<ComputeShader>("shader/UpdateParticle");
+        if (SetDrawBufferArgCS == null) SetDrawBufferArgCS = Resources.Load<ComputeShader>("shader/SetDrawBufferArg");
+    }
+
+    void ResetBuffer()
+    {
+        DisposeBuffer();
+        InitBuffer();
+    }
+
+    public void WantReset()
+    {
+        _reset = true;
+    }
+
+    public void WantEmit(int num)
+    {
+        if (num > _maxParticle) num = _maxParticle;
+        emitCount += num;
     }
 
     void DispatchInitDeadList()
     {
-        ComputeShader cs = _emitCS[(int)ComputeShaderKind.InitBuffer];
-        int kernelId = csID[(int)ComputeShaderKind.InitBuffer];
+        ComputeShader cs = InitBufferCS;
+        int kernelId = InitBufferCSID;
+        if (cs == null) return;
+
         deadlistCB.SetCounterValue(0);
         cs.SetBuffer(kernelId, deadlistId, deadlistCB);
         cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
-        cs.Dispatch(kernelId, maxParticle, 1, 1);
+        cs.Dispatch(kernelId, _maxParticle, 1, 1);
     }
 
     int GetBufferCount(ComputeBuffer cb)
@@ -249,8 +280,10 @@ public class Emitter : MonoBehaviour {
     {
         ComputeShader cs;
         int kernelId;
-        cs = _emitCS[(int)ComputeShaderKind.EmitCount];
-        kernelId = csID[(int)ComputeShaderKind.EmitCount];
+        cs = EmitCountCS;
+        kernelId = EmitCountCSID;
+        if (cs == null) return;
+
         cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
         cs.SetBuffer(kernelId, emitParticleInfoId, emitParticleInfoCB);
         cs.SetBuffer(kernelId, updateIndirectBufferId, updateIndirectCB);
@@ -261,8 +294,10 @@ public class Emitter : MonoBehaviour {
     {
         ComputeShader cs;
         int kernelId;
-        cs = _emitCS[(int)ComputeShaderKind.EmitParticle];
-        kernelId = csID[(int)ComputeShaderKind.EmitParticle];
+        cs = EmitParticleCS;
+        kernelId = EmitParticleCSID;
+        if (cs == null) return;
+
         cs.SetBuffer(kernelId, emitParticleInfoId, emitParticleInfoCB);
         cs.SetBuffer(kernelId, deadlistId, deadlistCB);
         cs.SetBuffer(kernelId, alivelistId, alivelistCB);
@@ -281,9 +316,11 @@ public class Emitter : MonoBehaviour {
         args[1] = 0;
         instancingArgCB.SetData(args);
 
-        cs = _emitCS[(int)ComputeShaderKind.UpdateParticle];
+        cs = UpdateParticleCS;
         alivelistSecCB.SetCounterValue(0);
-        kernelId = csID[(int)ComputeShaderKind.UpdateParticle];
+        kernelId = UpdateParticleCSID;
+        if (cs == null) return;
+
         cs.SetBuffer(kernelId, emitParticleInfoId, emitParticleInfoCB);
         cs.SetBuffer(kernelId, deadlistId, deadlistCB);
         cs.SetBuffer(kernelId, alivelistId, alivelistCB);
@@ -298,8 +335,10 @@ public class Emitter : MonoBehaviour {
     {
         ComputeShader cs;
         int kernelId;
-        cs = _emitCS[(int)ComputeShaderKind.SetDrawBufferArg];
-        kernelId = csID[(int)ComputeShaderKind.SetDrawBufferArg];
+        cs = SetDrawBufferArgCS;
+        kernelId = SetDrawBufferArgCSID;
+        if (cs == null) return;
+
         cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
         cs.SetBuffer(kernelId, instancingArgId, instancingArgCB);
         cs.Dispatch(kernelId, 1, 1, 1);
@@ -307,6 +346,12 @@ public class Emitter : MonoBehaviour {
 
     void FixedUpdate() {
         emitCount += emitRate * Time.deltaTime;
+
+        if (_reset)
+        {
+            ResetBuffer();
+            return;
+        }
 
         SetEmitInfoBuffer();
         DispatchEmitCount();    
@@ -350,13 +395,14 @@ public class Emitter : MonoBehaviour {
         _material.SetBuffer(alivelistId, alivelistCB);
         _material.SetBuffer(particlePoolId, particlePoolCB);
         */
+
+        if (_mesh == null || _material == null) return;
+
         if (mpb == null) { mpb = new MaterialPropertyBlock(); }
         mpb.SetBuffer(alivelistId, alivelistCB);
         mpb.SetBuffer(particlePoolId, particlePoolCB);
         
         Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb, castShadow ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off, receiveShadow );
-        //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB);
-        //Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb);
     }
 
 }
