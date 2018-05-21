@@ -124,6 +124,8 @@ public class Emitter : MonoBehaviour {
     int alivelistCount;
     EmitParticleInfo emitInfo;
     Vector3 prevPosition;
+    // cache push array. reduce CG
+    EmitParticleInfo[] emitInfoParam;
 
 	// Use this for initialization
 	void Start () {
@@ -272,7 +274,11 @@ public class Emitter : MonoBehaviour {
         emitInfo.angularSpeed.Set(rotation.x, rotation.y, rotation.z);
         emitInfo.emitKind = (int)emitKind;
         emitInfo.boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
-        EmitParticleInfo[] emitInfoParam = new EmitParticleInfo[] { emitInfo };
+        if (emitInfoParam == null)
+        {
+            emitInfoParam = new EmitParticleInfo[1];
+        }
+        emitInfoParam[0] = emitInfo;
         emitParticleInfoCB.SetData(emitInfoParam);
     }
 
