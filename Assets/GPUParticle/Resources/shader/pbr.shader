@@ -19,7 +19,7 @@
 		#pragma instancing_options procedural:setup
 
 		#include "UnityInstancing.cginc"
-		#include "particle.h"
+		#include "particle.cginc"
 		#include "UnityCG.cginc"
 		
 		sampler2D _MainTex;

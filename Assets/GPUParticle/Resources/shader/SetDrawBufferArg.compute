@@ -1,5 +1,5 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
-#include "particle.h"
+#include "particle.cginc"
 #pragma kernel SetDrawBufferArg
 
 RWStructuredBuffer<IndirectArgumentBuffer> instancingArg:register(u1);

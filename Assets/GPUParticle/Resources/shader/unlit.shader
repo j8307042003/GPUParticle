@@ -23,7 +23,7 @@ Shader "GPUParticle/Unlit"
 			#pragma multi_compile_instancing
 			#pragma target 4.5
 
-			#include "particle.h"
+			#include "particle.cginc"
 			#include "UnityCG.cginc"
 
 			struct appdata
