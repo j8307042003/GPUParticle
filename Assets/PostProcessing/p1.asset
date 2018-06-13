@@ -44,7 +44,7 @@ MonoBehaviour:
     m_Settings:
       intensity: 1
       radius: 0.3
-      sampleCount: 10
+      sampleCount: 16
       downsampling: 1
       forceForwardCompatibility: 0
       ambientOnly: 0
@@ -54,28 +54,28 @@ MonoBehaviour:
     m_Settings:
       reflection:
         blendType: 0
-        reflectionQuality: 2
-        maxDistance: 100
-        iterationCount: 256
-        stepSize: 3
-        widthModifier: 0.5
-        reflectionBlur: 1
+        reflectionQuality: 0
+        maxDistance: 300
+        iterationCount: 253
+        stepSize: 5
+        widthModifier: 0.01
+        reflectionBlur: 0.1
         reflectBackfaces: 0
       intensity:
         reflectionMultiplier: 1
-        fadeDistance: 100
-        fresnelFade: 1
+        fadeDistance: 0
+        fresnelFade: 0
         fresnelFadePower: 1
       screenEdgeMask:
-        intensity: 0.03
+        intensity: 0
   depthOfField:
     m_Enabled: 0
     m_Settings:
-      focusDistance: 10
-      aperture: 0.7
-      focalLength: 44
+      focusDistance: 33.46
+      aperture: 0.5
+      focalLength: 31
       useCameraFov: 0
-      kernelSize: 1
+      kernelSize: 0
   motionBlur:
     m_Enabled: 0
     m_Settings:

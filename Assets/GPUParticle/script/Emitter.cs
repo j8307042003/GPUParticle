@@ -271,7 +271,7 @@ public class Emitter : MonoBehaviour {
         emitInfo.prevPosition = prevPosition;
         emitInfo.radius = radius;
         emitInfo.coneEmitAngle = Mathf.Deg2Rad * coneEmitDegree;
-        emitInfo.angularSpeed.Set(rotation.x, rotation.y, rotation.z);
+        emitInfo.angularSpeed.Set(rotation.x * Mathf.Deg2Rad, rotation.y * Mathf.Deg2Rad, rotation.z * Mathf.Deg2Rad);
         emitInfo.emitKind = (int)emitKind;
         emitInfo.boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
         if (emitInfoParam == null)

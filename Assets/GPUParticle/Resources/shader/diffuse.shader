@@ -69,12 +69,6 @@
 				half3 worldNormal = -o.worldNormal;
 				half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
 				o.diff = nl * _LightColor0;
-
-				// the only difference from previous shader:
-				// in addition to the diffuse lighting from the main light,
-				// add illumination from ambient or light probes
-				// ShadeSH9 function from UnityCG.cginc evaluates it,
-				// using world space normal
 				o.diff.rgb += ShadeSH9(half4(worldNormal, 1));
 
 

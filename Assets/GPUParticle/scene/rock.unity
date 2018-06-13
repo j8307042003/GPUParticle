@@ -383,7 +383,7 @@ MonoBehaviour:
   radius: 15
   coneEmitDegree: 49
   boxEmitSize: {x: 0, y: 0, z: 0}
-  rotation: {x: 350, y: 480, z: 950}
+  rotation: {x: 80, y: 260, z: 300}
   _mesh: {fileID: 4300000, guid: d1edb567dd56f994cbb75a74e047b18a, type: 3}
   _material: {fileID: 2100000, guid: 4c464caff1579a444a6f5b63118b5591, type: 2}
   receiveShadow: 1

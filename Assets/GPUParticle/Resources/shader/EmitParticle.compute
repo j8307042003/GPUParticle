@@ -1,6 +1,6 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #include "particle.h"
-#include "mathLib.h"
+#include "mathLib.cginc"
 
 
 #pragma kernel EmitParticle
@@ -15,14 +15,9 @@ ConsumeStructuredBuffer<uint> deadlist;
 
 float time;
 
-float rand(float2 co, float offset) {
-	co += float2(offset, emitParticleInfo[0]._dt);
-
-	return frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453);
-}
-
-float randNP1(float2 co, float offset) {
-	return rand(co, offset) * 2.0 - 1.0;
+// between -1 ~ 1
+float randNP1(float2 co) {
+	return rand(co) * 2.0 - 1.0;
 }
 
 void SetSubframe(uint index, uint3 id) {
@@ -32,22 +27,22 @@ void SetSubframe(uint index, uint3 id) {
 }
 
 void SetDefaultScale(uint index, float2 randKey) {
-	particlePool[index].scale = (randNP1(randKey, 4.0) * emitParticleInfo[0].scaleRandom + 1.0)  * emitParticleInfo[0].scale;
+	particlePool[index].scale = (randNP1(randKey + 4.0) * emitParticleInfo[0].scaleRandom + 1.0)  * emitParticleInfo[0].scale;
 }
 
 float RandStartVelocity(float2 randKey, float offset) {
-	return emitParticleInfo[0].startVelocity * (1 - emitParticleInfo[0].startVelocityRandomness * rand(randKey, offset));
+	return emitParticleInfo[0].startVelocity * (1 - emitParticleInfo[0].startVelocityRandomness * rand(randKey + offset));
 }
 
 void boxEmit(uint index, uint3 id) {
-	float2 randKey = float2(fmod(id.x, emitParticleInfo[0].realEmitCount), time);
+	float2 randKey = float2(index, time);
 	float3 right = AxisRotateByQuaternion(float3(1.0, 0.0, 0.0), emitParticleInfo[0].emitterRot);
 	float3 up = AxisRotateByQuaternion(float3(0.0, 1.0, 0.0), emitParticleInfo[0].emitterRot);
 	float3 forward = AxisRotateByQuaternion(float3(0.0, 0.0, 1.0), emitParticleInfo[0].emitterRot);
 
-	//float3 posOffset = float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), randNP1(randKey, 2.0)) * emitParticleInfo[0].boxEmitSize;
 	float3 size = emitParticleInfo[0].boxEmitSize;
-	float3 posOffset = (right * randNP1(randKey, 0.0) * size.x + up * randNP1(randKey, 1.0) * size.y + forward * randNP1(randKey, 2.0) * size.z);
+	float3 posOffset = (right * randNP1(randKey) * size.x + up * randNP1(randKey + 1.0) * size.y + forward * randNP1(randKey + 2.0) * size.z);
+
 	particlePool[index].velocity = RandStartVelocity(randKey, 0.4) * AxisRotateByQuaternion(float3(0.0, 0.0, 1.0), emitParticleInfo[0].emitterRot);
 	particlePool[index].quaternion = Quaternion();
 	particlePool[index].position = emitParticleInfo[0].originPos + posOffset;
@@ -56,24 +51,33 @@ void boxEmit(uint index, uint3 id) {
 }
 
 void coneEmit(uint index, uint3 id) {
-	//float2 randKey = float2(fmod(id.x, emitParticleInfo[0].realEmitCount), frac(time));
-	float2 randKey = float2(index/ time, id.x / time);
-	float randAngle = rand(randKey, time) * (emitParticleInfo[0].coneEmitAngle * 0.5);
+	float2 randKey = float2( index, time);
+	float randAngle = (randNP1(randKey) * (emitParticleInfo[0].coneEmitAngle)) * 0.5;
 	float3 right = AxisRotateByQuaternion(float3(1.0, 0.0, 0.0), emitParticleInfo[0].emitterRot);
 	float3 up = AxisRotateByQuaternion(float3(0.0, 1.0, 0.0), emitParticleInfo[0].emitterRot);
 	float3 forward = AxisRotateByQuaternion(float3(0.0, 0.0, 1.0), emitParticleInfo[0].emitterRot);
-	float4 rot = NormalizeQuaternion(Quaternion( normalize(right * randNP1(randKey, time + 0.1) + up * randNP1(randKey, time + 0.4)), randAngle));
+	float2 randKeyRev = float2(randKey.y, randKey.x);
+	float randRight = (randNP1(randKeyRev + time + 1.2) + 0.2);
+	float randUp = (randNP1(randKeyRev + time + 0.4) + 0.2);
+	float2 randRightUp = randRight == 0.0 && randUp == 0.0 ? float2(1.0, 1.0) : float2(randRight, randUp);
+	randRightUp = normalize(randRightUp);
+	float3 axis = AxisRotateByQuaternion(float3(randRightUp.x, randRightUp.y, 0.0), emitParticleInfo[0].emitterRot);
+	float4 rot = NormalizeQuaternion(Quaternion(axis, randAngle));
 	float3 dir = normalize(AxisRotateByQuaternion(forward, rot));
+
 	particlePool[index].velocity = RandStartVelocity(randKey, 0.4) * dir;
 	particlePool[index].quaternion = Quaternion();
 	particlePool[index].position = emitParticleInfo[0].originPos;
 	SetDefaultScale(index, randKey);
-	SetSubframe(index, id);	
+	SetSubframe(index, id);
+
 }
 
 void sphereEmit(uint index, uint3 id) {
 	float2 randKey = float2(index, time);
-	float3 dir = normalize(float3(randNP1(randKey, 0.0), randNP1(randKey, 1.0), randNP1(randKey, 2.0)));
+	float3 dir = normalize(float3(randNP1(randKey + 0.0), randNP1(randKey + 1.0), randNP1(randKey + 2.0)));
+
+
 	particlePool[index].velocity = RandStartVelocity(randKey, 0.4) * dir;
 	particlePool[index].quaternion = Quaternion();
 	particlePool[index].position = emitParticleInfo[0].originPos + dir * emitParticleInfo[0].radius;

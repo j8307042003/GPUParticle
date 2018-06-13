@@ -105,10 +105,15 @@ float4x4 TranslationMatrix(float3 pos) {
 	);
 }
 
+
+//Unity CJ Lib 
+//https://github.com/TheAllenChou/unity-cj-lib
+//
 float mod(float x, float y)
 {
 	return x - y * floor(x / y);
 }
+
 
 float rand(float s)
 {

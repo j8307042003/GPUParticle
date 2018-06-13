@@ -1,6 +1,6 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #include "particle.h"
-#include "mathLib.h"
+#include "mathLib.cginc"
 
 
 #pragma kernel UpdateParticle
@@ -50,11 +50,9 @@ void UpdateParticle (uint3 id : SV_DispatchThreadID)
 
 	}
 
-	float magnitude = length(emitParticleInfo[0].angularSpeed)*0.01745;
-	float4 deltaRot = Quaternion(magnitude > 0.0 ? normalize(emitParticleInfo[0].angularSpeed) : float3(0.0, 0.0, 0.0), magnitude*emitParticleInfo[0]._dt * rand(float2(id.x, time), 0.0) );
-
-	particle.quaternion = qmul(particle.quaternion, deltaRot);
-	particle.quaternion = NormalizeQuaternion(particle.quaternion);
+	float4 deltaRot = qmul(float4(0.5 * emitParticleInfo[0].angularSpeed, 0.0), particle.quaternion);
+	float4 newRot = normalize(particle.quaternion + deltaRot * emitParticleInfo[0]._dt);
+	particle.quaternion = newRot;
 	float4 q = particle.quaternion;
 	
 	float4x4 rotMat = float4x4(
