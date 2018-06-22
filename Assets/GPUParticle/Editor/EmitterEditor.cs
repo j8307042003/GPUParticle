@@ -74,20 +74,20 @@ public class EmitterEditor : Editor {
 		GUILayout.Label ("Emit Style", EditorStyles.boldLabel);
 		EditorGUILayout.PropertyField(emitKind);
 
-        if(emitKind.intValue == (int) Emitter.EmitKind.Box)
+        switch (emitKind.intValue)
         {
-           EditorGUILayout.PropertyField(boxEmitSize);
+            case (int)Emitter.EmitKind.Box:
+                EditorGUILayout.PropertyField(boxEmitSize);
+                break;
+            case (int)Emitter.EmitKind.Sphere:
+                EditorGUILayout.PropertyField(radius);
+                break;
+            case (int)Emitter.EmitKind.Cone:
+                EditorGUILayout.PropertyField(coneEmitDegree);
+                break;
         }
-        else if (emitKind.intValue == (int)Emitter.EmitKind.Sphere)
-        {
-            EditorGUILayout.PropertyField(radius);
-        }
-        else if (emitKind.intValue == (int)Emitter.EmitKind.Cone)
-        {
-            EditorGUILayout.PropertyField(coneEmitDegree);
-        }
-	
-		GUILayout.Label ("Rotation", EditorStyles.boldLabel);	
+
+        GUILayout.Label ("Rotation", EditorStyles.boldLabel);	
 		EditorGUILayout.PropertyField(rotation);
 
 		GUILayout.Label ("Emit Object", EditorStyles.boldLabel);		

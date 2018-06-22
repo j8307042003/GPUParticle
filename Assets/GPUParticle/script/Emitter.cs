@@ -3,53 +3,61 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-struct EmitParticleInfo
-{
-    public uint emitCount;
-    public uint realEmitCount;
-    public float lifespan;
-    public float _dt;
-    public Vector3 scale;
-    public float startVelocity;
-    public float startVelocityRandomness;
-    public Vector3 originPos;
-    public float radius;
-    public Quaternion emitterRot;
-    public float scaleRandom;
-    public Vector3 acceleration;
-    public float coneEmitAngle;
-    public Vector3 prevPosition;
-    public int emitKind;
-    public Vector3 angularSpeed;
-    public Vector3 boxEmitSize;
-}
-
-struct ParticleCounter
-{
-    public uint alivelistCount;
-    public uint deadlistCount;
-    public uint updateParticleCount;
-}
-
-
-struct Particle
-{
-    public float lifespan;
-    public Vector3 position;
-    public Vector3 velocity;
-    public Matrix4x4 model;
-    public Vector3 scale;
-    public Vector4 quaternion;
-}
-
-
-
-
 public class Emitter : MonoBehaviour {
+
+    #region Data Structure
+    struct EmitParticleInfo
+    {
+        public uint emitCount;
+        public uint realEmitCount;
+        public float lifespan;
+        public float _dt;
+        public Vector3 scale;
+        public float startVelocity;
+        public float startVelocityRandomness;
+        public Vector3 originPos;
+        public float radius;
+        public Quaternion emitterRot;
+        public float scaleRandom;
+        public Vector3 acceleration;
+        public float coneEmitAngle;
+        public Vector3 prevPosition;
+        public int emitKind;
+        public Vector3 angularSpeed;
+        public Vector3 boxEmitSize;
+    }
+
+    struct ParticleCounter
+    {
+        public uint alivelistCount;
+        public uint deadlistCount;
+        public uint updateParticleCount;
+    }
+
+
+    struct Particle
+    {
+        public float lifespan;
+        public Vector3 position;
+        public Vector3 velocity;
+        public Matrix4x4 model;
+        public Vector3 scale;
+        public Vector4 quaternion;
+    }
+
+    public enum EmitKind
+    {
+        Sphere = 1,
+        Cone = 2,
+        Box = 3,
+    };
+    #endregion
+
+    #region Public Variable
+    public float emitRate = 0;
+
     [SerializeField]
-    int _maxParticle;
-    public float emitRate=0;
- 
+    int _maxParticle;   
     public int maxParticle { get { return _maxParticle; }
                              set { _maxParticle = value; _reset = true; } }
     public float lifespan;
@@ -77,20 +85,14 @@ public class Emitter : MonoBehaviour {
     public ComputeShader EmitParticleCS;
     public ComputeShader UpdateParticleCS;
     public ComputeShader SetDrawBufferArgCS;
+    #endregion
 
+    #region Private Variable
     int InitBufferCSID;
     int EmitCountCSID;
     int EmitParticleCSID;
     int UpdateParticleCSID;
     int SetDrawBufferArgCSID;
-
-    public enum EmitKind
-    {
-        Sphere=1,
-        Cone=2,
-        Box=3,
-    };
-
 
     float emitCount;
 
@@ -122,16 +124,16 @@ public class Emitter : MonoBehaviour {
 
     int deadlistCount;
     int alivelistCount;
-    EmitParticleInfo emitInfo;
     Vector3 prevPosition;
     // cache push array. reduce CG
     EmitParticleInfo[] emitInfoParam;
+    #endregion
 
-	// Use this for initialization
-	void Start () {
+    #region MonoBehaviour
+
+    void Start () {
         LoadDefaultComputeShader();
         InitBuffer();
-        emitInfo = new EmitParticleInfo();
     }
 
     void OnEnable()
@@ -143,7 +145,14 @@ public class Emitter : MonoBehaviour {
     {
         DisposeBuffer();
     }
+    #endregion
 
+    #region Resource Init And Setting 
+    void ResetBuffer()
+    {
+        DisposeBuffer();
+        InitBuffer();
+    }
 
     void DisposeBuffer()
     {
@@ -197,12 +206,36 @@ public class Emitter : MonoBehaviour {
         if (SetDrawBufferArgCS == null) SetDrawBufferArgCS = Resources.Load<ComputeShader>("shader/SetDrawBufferArg");
     }
 
-    void ResetBuffer()
+    void SetEmitInfoBuffer()
     {
-        DisposeBuffer();
-        InitBuffer();
-    }
+        if (emitInfoParam == null)
+        {
+            emitInfoParam = new EmitParticleInfo[1];
+        }
 
+        // setting emitter Data
+        emitInfoParam[0].emitCount = (uint)emitCount;
+        emitInfoParam[0].lifespan = lifespan;
+        emitInfoParam[0]._dt = Time.deltaTime;
+        emitInfoParam[0].scaleRandom = scaleRandomness;
+        emitInfoParam[0].originPos = transform.position;
+        emitInfoParam[0].emitterRot = transform.rotation;
+        emitInfoParam[0].startVelocity = startVelocity;
+        emitInfoParam[0].startVelocityRandomness = startVelocityRandomness;
+        emitInfoParam[0].acceleration = acceleration;
+        emitInfoParam[0].scale = transform.localScale;
+        emitInfoParam[0].prevPosition = prevPosition;
+        emitInfoParam[0].radius = radius;
+        emitInfoParam[0].coneEmitAngle = Mathf.Deg2Rad * coneEmitDegree;
+        emitInfoParam[0].angularSpeed.Set(rotation.x * Mathf.Deg2Rad, rotation.y * Mathf.Deg2Rad, rotation.z * Mathf.Deg2Rad);
+        emitInfoParam[0].emitKind = (int)emitKind;
+        emitInfoParam[0].boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
+
+        emitParticleInfoCB.SetData(emitInfoParam);
+    }
+    #endregion
+
+    #region Public Method
     public void WantReset()
     {
         _reset = true;
@@ -213,7 +246,19 @@ public class Emitter : MonoBehaviour {
         if (num > _maxParticle) num = _maxParticle;
         emitCount += num;
     }
+    #endregion
 
+    #region Utility
+    static void Swap<T>(ref T lhs, ref T rhs)
+    {
+        T temp;
+        temp = lhs;
+        lhs = rhs;
+        rhs = temp;
+    }
+    #endregion
+
+    #region Compute Shader Dispatch
     void DispatchInitDeadList()
     {
         ComputeShader cs = InitBufferCS;
@@ -226,62 +271,8 @@ public class Emitter : MonoBehaviour {
         cs.Dispatch(kernelId, _maxParticle, 1, 1);
     }
 
-    int GetBufferCount(ComputeBuffer cb)
-    {
-
-        int[] args = new int[] { 0 };
-        ComputeBuffer copyCountCB = new ComputeBuffer(1, sizeof(int), ComputeBufferType.IndirectArguments);
-        ComputeBuffer.CopyCount(cb, copyCountCB, 0);
-        copyCountCB.GetData(args);
-
-        copyCountCB.Dispose();
-        return args[0]; 
-    }
-
-    void updateDeadlist()
-    {
-        deadlistCount = GetBufferCount(deadlistCB);
-    }
-
-    void updateAlivelist()
-    {
-        alivelistCount = GetBufferCount(alivelistCB);
-    }
-	
-    void SwapCB( ref ComputeBuffer a, ref ComputeBuffer b)
-    {
-        ComputeBuffer tmp = a;
-        a = b;
-        b = tmp;
-    }
-
-    void SetEmitInfoBuffer()
-    {
-        // setting emitter Data
-        emitInfo.emitCount = (uint)emitCount;
-        emitInfo.lifespan = lifespan;
-        emitInfo._dt = Time.deltaTime;
-        emitInfo.scaleRandom = scaleRandomness;
-        emitInfo.originPos = transform.position;
-        emitInfo.emitterRot = transform.rotation;
-        emitInfo.startVelocity = startVelocity ;
-        emitInfo.startVelocityRandomness = startVelocityRandomness;
-        emitInfo.acceleration = acceleration;
-        emitInfo.scale = transform.localScale;
-        emitInfo.prevPosition = prevPosition;
-        emitInfo.radius = radius;
-        emitInfo.coneEmitAngle = Mathf.Deg2Rad * coneEmitDegree;
-        emitInfo.angularSpeed.Set(rotation.x * Mathf.Deg2Rad, rotation.y * Mathf.Deg2Rad, rotation.z * Mathf.Deg2Rad);
-        emitInfo.emitKind = (int)emitKind;
-        emitInfo.boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
-        if (emitInfoParam == null)
-        {
-            emitInfoParam = new EmitParticleInfo[1];
-        }
-        emitInfoParam[0] = emitInfo;
-        emitParticleInfoCB.SetData(emitInfoParam);
-    }
-
+    // Update Stage 1
+    // calculate how many particle can be emitted.
     void DispatchEmitCount()
     {
         ComputeShader cs;
@@ -296,6 +287,8 @@ public class Emitter : MonoBehaviour {
         cs.Dispatch(kernelId, 1, 1, 1);
     }
 
+    // Update Stage 2
+    // Emit particle
     void DispatchEmitParticle()
     {
         ComputeShader cs;
@@ -310,9 +303,11 @@ public class Emitter : MonoBehaviour {
         cs.SetBuffer(kernelId, particlePoolId, particlePoolCB);
         cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
         cs.SetFloat(timeId, Time.time);
-        cs.Dispatch(kernelId, (int)Mathf.Ceil(emitInfo.emitCount / 1024.0f), 1, 1);
+        cs.Dispatch(kernelId, (int)Mathf.Ceil(emitCount / 1024.0f), 1, 1);
     }
 
+    // Update Stage 3
+    // Update particle
     void DispatchUpdateParticle()
     {
         ComputeShader cs;
@@ -337,6 +332,8 @@ public class Emitter : MonoBehaviour {
         cs.DispatchIndirect(kernelId, updateIndirectCB, 0);
     }
 
+    // Update Stage 5
+    // update instancing indirect buffer
     void DispatchDrawArg()
     {
         ComputeShader cs;
@@ -349,6 +346,9 @@ public class Emitter : MonoBehaviour {
         cs.SetBuffer(kernelId, instancingArgId, instancingArgCB);
         cs.Dispatch(kernelId, 1, 1, 1);
     }
+    #endregion
+
+    #region MonoBehaviour Update
 
     void FixedUpdate() {
         emitCount += emitRate * Time.deltaTime;
@@ -361,14 +361,13 @@ public class Emitter : MonoBehaviour {
 
         SetEmitInfoBuffer();
         DispatchEmitCount();    
-        if (emitInfo.emitCount > 0) DispatchEmitParticle();
+        if (emitCount > 0) DispatchEmitParticle();
         DispatchUpdateParticle();        
-        SwapCB(ref alivelistCB, ref alivelistSecCB); // Swap alive list
+        Swap<ComputeBuffer>(ref alivelistCB, ref alivelistSecCB); // Swap alive list
         DispatchDrawArg();
 
 
-        /*
-        
+        /*        
         if (_debug)
         {
             EmitParticleInfo[] emitInfoParam = new EmitParticleInfo[] { emitInfo };
@@ -410,5 +409,32 @@ public class Emitter : MonoBehaviour {
         
         Graphics.DrawMeshInstancedIndirect(_mesh, 0, _material, new Bounds(Vector3.zero, new Vector3(10000.0f, 10000.0f, 10000.0f)), instancingArgCB, 0, mpb, castShadow ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off, receiveShadow );
     }
+    #endregion
 
+    #region Debug Function
+    // for Debug 
+    int GetBufferCount(ComputeBuffer cb)
+    {
+
+        int[] args = new int[] { 0 };
+        ComputeBuffer copyCountCB = new ComputeBuffer(1, sizeof(int), ComputeBufferType.IndirectArguments);
+        ComputeBuffer.CopyCount(cb, copyCountCB, 0);
+        copyCountCB.GetData(args);
+
+        copyCountCB.Dispose();
+        return args[0];
+    }
+
+    // for Debug
+    void updateDeadlist()
+    {
+        deadlistCount = GetBufferCount(deadlistCB);
+    }
+
+    // for Debug
+    void updateAlivelist()
+    {
+        alivelistCount = GetBufferCount(alivelistCB);
+    }
+    #endregion
 }
