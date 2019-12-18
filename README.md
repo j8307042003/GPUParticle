@@ -7,7 +7,7 @@ A simple GPU accelerated particle system using compute shader for Unity
 
 ![gif](https://thumbs.gfycat.com/TimelyAlarmedIrishwolfhound-size_restricted.gif)
 
-![gif](https://i.imgur.com/2oTz2vX.gif)
-![gif](https://i.imgur.com/KSJsBtb.gif)
+![gif](https://i.imgur.com/VhtacOk.gif)
+![gif](https://i.imgur.com/PWfmniG.gif)
 
 Recommend Version: Unity 2017.3.1f1
