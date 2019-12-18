@@ -19,7 +19,7 @@ struct EmitParticleInfo
 	float3 angularSpeed;
 	float3 boxEmitSize;
 	float bound;
-	bool bCollision;
+	uint bCollision;
 };
 
 struct ParticleCounter{

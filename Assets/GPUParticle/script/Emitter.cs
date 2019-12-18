@@ -26,7 +26,7 @@ public class Emitter : MonoBehaviour {
         public Vector3 angularSpeed;
         public Vector3 boxEmitSize;
         public float bound;
-        public bool bCollision;
+        public int bCollision;
     }
 
     struct ParticleCounter
@@ -250,7 +250,7 @@ public class Emitter : MonoBehaviour {
         emitInfoParam[0].emitKind = (int)emitKind;
         emitInfoParam[0].boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
         emitInfoParam[0].bound = boundV3.sqrMagnitude;
-        emitInfoParam[0].bCollision = screenSpaceCollision;
+        emitInfoParam[0].bCollision = screenSpaceCollision ? 1 : 0;
 
         emitParticleInfoCB.SetData(emitInfoParam);
     }

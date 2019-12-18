@@ -393,6 +393,7 @@ MonoBehaviour:
   coneEmitDegree: 49
   boxEmitSize: {x: 0, y: 0, z: 0}
   rotation: {x: 0, y: 0, z: 0}
+  screenSpaceCollision: 1
   _mesh: {fileID: 4300000, guid: d1edb567dd56f994cbb75a74e047b18a, type: 3}
   _material: {fileID: 2100000, guid: dd9b40dc2502a864f99483c8257f6984, type: 2}
   receiveShadow: 0
@@ -513,7 +514,6 @@ GameObject:
   - component: {fileID: 897279980}
   - component: {fileID: 897279979}
   - component: {fileID: 897279978}
-  - component: {fileID: 897279977}
   m_Layer: 0
   m_Name: Main Camera (2)
   m_TagString: MainCamera
@@ -521,28 +521,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &897279977
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 897279976}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb48ea7dfc3cf154e856c1bd178802fd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cameraDepthSampler: {fileID: 7200000, guid: fe4ba28f687fc0a448f2ef1f205d8556, type: 3}
-  prefix: _Cam
-  propModelToWorld: _O2W
-  propWorldToModel: _W2O
-  propWorldToCam: _W2C
-  propCamToWorld: _C2W
-  propCamProjection: _C2P
-  propCamVP: _VP
-  propScreenToCam: _S2C
-  propProjectionParams: _PParams
-  propScreenParams: _SParams
 --- !u!114 &897279978
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -688,6 +666,7 @@ MonoBehaviour:
   coneEmitDegree: 229
   boxEmitSize: {x: 0, y: 0, z: 0}
   rotation: {x: 0, y: 0, z: 0}
+  screenSpaceCollision: 1
   _mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
   _material: {fileID: 2100000, guid: 4bf6869a14c9e1149a5d6f6401846b6c, type: 2}
   receiveShadow: 0
