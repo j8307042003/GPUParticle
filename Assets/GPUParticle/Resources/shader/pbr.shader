@@ -9,6 +9,7 @@
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
+		//ZWrite Off
 		LOD 200
 
 		CGPROGRAM
@@ -17,6 +18,8 @@
 		#pragma surface surf Standard addshadow fullforwardshadows
 		#pragma multi_compile_instancing
 		#pragma instancing_options procedural:setup
+
+		
 
 		#include "UnityInstancing.cginc"
 		#include "particle.cginc"
@@ -55,6 +58,11 @@
 		void surf (Input IN, inout SurfaceOutputStandard o) {
 			// Albedo comes from a texture tinted by color
 			fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
+#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+			uint particleId = alivelist[unity_InstanceID];
+			Particle data = particlePool[particleId];
+			//c.rgb = data.color;
+#endif
 			o.Albedo = c.rgb;
 			o.Emission = _Emission * _Color.xyz;
 			// Metallic and smoothness come from slider variables

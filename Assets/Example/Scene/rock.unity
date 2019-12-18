@@ -275,6 +275,7 @@ GameObject:
   - component: {fileID: 1867322274}
   - component: {fileID: 1867322273}
   - component: {fileID: 1867322272}
+  - component: {fileID: 1867322276}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -345,6 +346,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1867322276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1867322271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2025d405a617dd541b3038a22f42fa86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  postprocessMaterial: {fileID: 0}
+  _debugMaterial: {fileID: 0}
 --- !u!1 &2112341930
 GameObject:
   m_ObjectHideFlags: 0
@@ -372,8 +386,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a11cd4854444ecb41b338e2b3cb2f65d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxParticle: 80000
   emitRate: 8000
+  _maxParticle: 80000
   lifespan: 3
   startVelocity: 20
   startVelocityRandomness: 0.419
@@ -384,6 +398,7 @@ MonoBehaviour:
   coneEmitDegree: 49
   boxEmitSize: {x: 0, y: 0, z: 0}
   rotation: {x: 80, y: 260, z: 300}
+  screenSpaceCollision: 1
   _mesh: {fileID: 4300000, guid: d1edb567dd56f994cbb75a74e047b18a, type: 3}
   _material: {fileID: 2100000, guid: 4c464caff1579a444a6f5b63118b5591, type: 2}
   receiveShadow: 1
@@ -394,6 +409,17 @@ MonoBehaviour:
   EmitParticleCS: {fileID: 0}
   UpdateParticleCS: {fileID: 0}
   SetDrawBufferArgCS: {fileID: 0}
+  _debugMaterial: {fileID: 0}
+  prefix: _Cam
+  propModelToWorld: _O2W
+  propWorldToModel: _W2O
+  propWorldToCam: _W2C
+  propCamToWorld: _C2W
+  propCamProjection: _C2P
+  propCamVP: _VP
+  propScreenToCam: _S2C
+  propProjectionParams: _PParams
+  propScreenParams: _SParams
 --- !u!4 &2112341933
 Transform:
   m_ObjectHideFlags: 0

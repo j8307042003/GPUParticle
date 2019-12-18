@@ -19,12 +19,14 @@ public class EmitterEditor : Editor {
     SerializedProperty coneEmitDegree;
     SerializedProperty boxEmitSize;
     SerializedProperty rotation;
+    SerializedProperty screenSpaceCollision;
     SerializedProperty _mesh;
     SerializedProperty _material;
     SerializedProperty _debug;
     SerializedProperty receiveShadow;
     SerializedProperty castShadow;
     SerializedProperty startVelocityRandomness;
+    SerializedProperty _debugMaterial;
 
     void OnEnable()
     {
@@ -40,12 +42,14 @@ public class EmitterEditor : Editor {
 		coneEmitDegree = serializedObject.FindProperty("coneEmitDegree");
 		boxEmitSize = serializedObject.FindProperty("boxEmitSize");
 		rotation = serializedObject.FindProperty("rotation");
-		_mesh = serializedObject.FindProperty("_mesh");
+        screenSpaceCollision = serializedObject.FindProperty("screenSpaceCollision");
+        _mesh = serializedObject.FindProperty("_mesh");
 		_material = serializedObject.FindProperty("_material");
 		_debug = serializedObject.FindProperty("_debug");
         receiveShadow = serializedObject.FindProperty("receiveShadow");
         castShadow = serializedObject.FindProperty("castShadow");
         startVelocityRandomness = serializedObject.FindProperty("startVelocityRandomness");
+        _debugMaterial = serializedObject.FindProperty("_debugMaterial");
     }
 
     public override void OnInspectorGUI()
@@ -90,6 +94,9 @@ public class EmitterEditor : Editor {
         GUILayout.Label ("Rotation", EditorStyles.boldLabel);	
 		EditorGUILayout.PropertyField(rotation);
 
+        GUILayout.Label ("Physics", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(screenSpaceCollision);
+
 		GUILayout.Label ("Emit Object", EditorStyles.boldLabel);		
 		EditorGUILayout.PropertyField(_mesh);
 		EditorGUILayout.PropertyField(_material);
@@ -99,6 +106,7 @@ public class EmitterEditor : Editor {
 
 
         EditorGUILayout.PropertyField(_debug);
+        EditorGUILayout.PropertyField(_debugMaterial);
         serializedObject.ApplyModifiedProperties();
     }
 }

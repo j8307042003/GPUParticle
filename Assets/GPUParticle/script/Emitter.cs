@@ -25,6 +25,8 @@ public class Emitter : MonoBehaviour {
         public int emitKind;
         public Vector3 angularSpeed;
         public Vector3 boxEmitSize;
+        public float bound;
+        public bool bCollision;
     }
 
     struct ParticleCounter
@@ -43,6 +45,7 @@ public class Emitter : MonoBehaviour {
         public Matrix4x4 model;
         public Vector3 scale;
         public Vector4 quaternion;
+        public Vector4 color;
     }
 
     public enum EmitKind
@@ -73,6 +76,7 @@ public class Emitter : MonoBehaviour {
     public float coneEmitDegree = 0.0f;
     public Vector3 boxEmitSize;
     public Vector3 rotation;
+    public bool screenSpaceCollision = true;
     [SerializeField]
     public Mesh _mesh;
     public Material _material;
@@ -85,6 +89,8 @@ public class Emitter : MonoBehaviour {
     public ComputeShader EmitParticleCS;
     public ComputeShader UpdateParticleCS;
     public ComputeShader SetDrawBufferArgCS;
+
+    public Material _debugMaterial;
     #endregion
 
     #region Private Variable
@@ -118,7 +124,14 @@ public class Emitter : MonoBehaviour {
     int instancingArgId = Shader.PropertyToID("instancingArg") ;
     int updateIndirectBufferId = Shader.PropertyToID("updateIndirectBuffer");
     int timeId = Shader.PropertyToID("time");
+    int _ViewProjId = Shader.PropertyToID("_ViewProj");
+    int CamerDepthSizeId = Shader.PropertyToID("CamerDepthSize");
     
+    int _CameraDepthTextureId = Shader.PropertyToID("_CameraDepthNormalsTexture");
+    int DepthNormalTex = Shader.PropertyToID("DepthNormalTex");
+
+    Camera m_camera;
+
     uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
     bool _reset = false;
 
@@ -132,6 +145,7 @@ public class Emitter : MonoBehaviour {
     #region MonoBehaviour
 
     void Start () {
+        m_camera = Camera.main;
         LoadDefaultComputeShader();
         InitBuffer();
     }
@@ -164,6 +178,7 @@ public class Emitter : MonoBehaviour {
         alivelistSecCB.Dispose();
         instancingArgCB.Dispose();
         updateIndirectCB.Dispose();
+
     }
 
     void InitBuffer()
@@ -213,6 +228,10 @@ public class Emitter : MonoBehaviour {
             emitInfoParam = new EmitParticleInfo[1];
         }
 
+        Vector3 boundV3 = _mesh.bounds.extents;
+        boundV3.Scale(transform.localScale);
+
+
         // setting emitter Data
         emitInfoParam[0].emitCount = (uint)emitCount;
         emitInfoParam[0].lifespan = lifespan;
@@ -230,6 +249,8 @@ public class Emitter : MonoBehaviour {
         emitInfoParam[0].angularSpeed.Set(rotation.x * Mathf.Deg2Rad, rotation.y * Mathf.Deg2Rad, rotation.z * Mathf.Deg2Rad);
         emitInfoParam[0].emitKind = (int)emitKind;
         emitInfoParam[0].boxEmitSize.Set(boxEmitSize.x / 2.0f, boxEmitSize.y / 2.0f, boxEmitSize.z / 2.0f);
+        emitInfoParam[0].bound = boundV3.sqrMagnitude;
+        emitInfoParam[0].bCollision = screenSpaceCollision;
 
         emitParticleInfoCB.SetData(emitInfoParam);
     }
@@ -256,6 +277,35 @@ public class Emitter : MonoBehaviour {
         lhs = rhs;
         rhs = temp;
     }
+
+
+    float[] GetViewProjectionArray()
+    {
+        var view = m_camera.worldToCameraMatrix;
+        var proj = GL.GetGPUProjectionMatrix(m_camera.projectionMatrix, true);
+        var vp = proj * view;
+        return new float[] {
+            vp.m00, vp.m10, vp.m20, vp.m30,
+            vp.m01, vp.m11, vp.m21, vp.m31,
+            vp.m02, vp.m12, vp.m22, vp.m32,
+            vp.m03, vp.m13, vp.m23, vp.m33
+        };
+    }
+
+    float[] GetInvViewProjectionArray()
+    {
+        var view = m_camera.worldToCameraMatrix;
+        var proj = GL.GetGPUProjectionMatrix(m_camera.projectionMatrix, true);
+        var vp = proj * view;
+        var invVp = vp.inverse;
+        return new float[] {
+            invVp.m00, invVp.m10, invVp.m20, invVp.m30,
+            invVp.m01, invVp.m11, invVp.m21, invVp.m31,
+            invVp.m02, invVp.m12, invVp.m22, invVp.m32,
+            invVp.m03, invVp.m13, invVp.m23, invVp.m33
+        };
+    }
+
     #endregion
 
     #region Compute Shader Dispatch
@@ -322,15 +372,74 @@ public class Emitter : MonoBehaviour {
         kernelId = UpdateParticleCSID;
         if (cs == null) return;
 
-        cs.SetBuffer(kernelId, emitParticleInfoId, emitParticleInfoCB);
-        cs.SetBuffer(kernelId, deadlistId, deadlistCB);
-        cs.SetBuffer(kernelId, alivelistId, alivelistCB);
-        cs.SetBuffer(kernelId, particleCounterId, particleCounterCB);
-        cs.SetBuffer(kernelId, particlePoolId, particlePoolCB);
-        cs.SetBuffer(kernelId, alivelistSecId, alivelistSecCB);
-        cs.SetBuffer(kernelId, instancingArgId, instancingArgCB);
+        cs.SetFloats( _ViewProjId, GetViewProjectionArray());
+        cs.SetBuffer( kernelId, emitParticleInfoId, emitParticleInfoCB);
+        cs.SetBuffer( kernelId, deadlistId, deadlistCB);
+        cs.SetBuffer( kernelId, alivelistId, alivelistCB);
+        cs.SetBuffer( kernelId, particleCounterId, particleCounterCB);
+        cs.SetBuffer( kernelId, particlePoolId, particlePoolCB);
+        cs.SetBuffer( kernelId, alivelistSecId, alivelistSecCB);
+        cs.SetBuffer( kernelId, instancingArgId, instancingArgCB);
+
+
+        if (Shader.GetGlobalTexture(_CameraDepthTextureId) != null)
+        {
+            Texture depthTexture = Shader.GetGlobalTexture(_CameraDepthTextureId);
+            cs.SetTexture(kernelId, DepthNormalTex, depthTexture);
+            cs.SetVector(CamerDepthSizeId, new Vector4(depthTexture.width, depthTexture.height));
+        }
+
+        SetCamParams(cs);
         cs.DispatchIndirect(kernelId, updateIndirectCB, 0);
     }
+
+
+    public string prefix = "_Cam";
+
+    [SerializeField]
+    string
+        propModelToWorld = "_O2W",
+        propWorldToModel = "_W2O",
+        propWorldToCam = "_W2C",
+        propCamToWorld = "_C2W",
+        propCamProjection = "_C2P",
+        propCamVP = "_VP",
+        propScreenToCam = "_S2C",
+        propProjectionParams = "_PParams",
+        propScreenParams = "_SParams";
+
+    void SetCamParams(ComputeShader cs)
+    {
+        var worldToCam = m_camera.worldToCameraMatrix.inverse;
+        var camToWorld = m_camera.cameraToWorldMatrix;
+        var projection = GL.GetGPUProjectionMatrix(m_camera.projectionMatrix, false);
+        var inverseP = projection.inverse;
+        var vp = projection * worldToCam;
+        var projectionParams = new Vector4(1f, m_camera.nearClipPlane, m_camera.farClipPlane, 1f / m_camera.farClipPlane);
+        var screenParams = new Vector4(m_camera.pixelWidth, m_camera.pixelHeight, 1f + 1f / (float)m_camera.pixelWidth, 1f + 1f / (float)m_camera.pixelHeight);
+
+        if (cs != null)
+        {
+            cs.SetMatrix(prefix + propWorldToCam, worldToCam);
+            cs.SetMatrix(prefix + propCamProjection, projection);
+            cs.SetMatrix(prefix + propCamVP, vp);
+            cs.SetMatrix(prefix + propScreenToCam, inverseP);
+            cs.SetMatrix(prefix + propCamToWorld, camToWorld);
+            cs.SetVector(prefix + propProjectionParams, projectionParams);
+            cs.SetVector(prefix + propScreenParams, screenParams);
+        }
+        else
+        {
+            Shader.SetGlobalMatrix(prefix + propWorldToCam, worldToCam);
+            Shader.SetGlobalMatrix(prefix + propCamProjection, projection);
+            Shader.SetGlobalMatrix(prefix + propCamVP, vp);
+            Shader.SetGlobalMatrix(prefix + propScreenToCam, inverseP);
+            Shader.SetGlobalMatrix(prefix + propCamToWorld, camToWorld);
+            Shader.SetGlobalVector(prefix + propProjectionParams, projectionParams);
+            Shader.SetGlobalVector(prefix + propScreenParams, screenParams);
+        }
+    }
+
 
     // Update Stage 5
     // update instancing indirect buffer
@@ -346,6 +455,7 @@ public class Emitter : MonoBehaviour {
         cs.SetBuffer(kernelId, instancingArgId, instancingArgCB);
         cs.Dispatch(kernelId, 1, 1, 1);
     }
+
     #endregion
 
     #region MonoBehaviour Update
@@ -367,17 +477,14 @@ public class Emitter : MonoBehaviour {
         DispatchDrawArg();
 
 
-        /*        
+               
         if (_debug)
         {
-            EmitParticleInfo[] emitInfoParam = new EmitParticleInfo[] { emitInfo };
             ParticleCounter[] particleC = new ParticleCounter[] { new ParticleCounter() };
             uint[] arg = new uint[5] { 0, 0, 0, 0, 0 };
             uint[] indirectB = new uint[3];
             uint[] alivelist = new uint[maxParticle];
             uint[] alivelistSec = new uint[maxParticle];
-            particle = new Particle[maxParticle];
-            particlePoolCB.GetData(particle);
             alivelistCB.GetData(alivelist);
             alivelistSecCB.GetData(alivelistSec);
             int aliveC = GetBufferCount(alivelistCB);
@@ -387,8 +494,9 @@ public class Emitter : MonoBehaviour {
             particleCounterCB.GetData(particleC);
             updateIndirectCB.GetData(indirectB);
             emitParticleInfoCB.GetData(emitInfoParam);
-            ;
-        }*/
+
+            int z  = 0;
+        }
 
         prevPosition = transform.position;
         emitCount -= (uint)emitCount;
@@ -436,5 +544,25 @@ public class Emitter : MonoBehaviour {
     {
         alivelistCount = GetBufferCount(alivelistCB);
     }
+    
+    void OnGUI()
+    {
+        if (Event.current.type != EventType.Repaint) return;
+        if (_debugMaterial)
+        {
+            Texture texture = Shader.GetGlobalTexture(_CameraDepthTextureId);
+
+
+            if (texture == null) return;
+            var w = texture.width / 4;
+            var h = texture.height / 4;
+
+            var rect = new Rect(0, 0, w, h);
+
+            _debugMaterial.SetTexture("_CameraDepthTexture", texture);
+            Graphics.DrawTexture(rect, texture, _debugMaterial);
+        }
+    }
+    
     #endregion
 }

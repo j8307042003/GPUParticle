@@ -1,11 +1,10 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #include "particle.cginc"
 #include "mathLib.cginc"
+//#include ""
 
 
 #pragma kernel UpdateParticle
-
-
 
 RWStructuredBuffer<EmitParticleInfo> emitParticleInfo;
 
@@ -17,17 +16,90 @@ RWStructuredBuffer<ParticleCounter> particleCounter;
 RWStructuredBuffer<Particle> particlePool;
 RWStructuredBuffer<uint> instancingArg;
 
+
+Texture2D<float4> DepthNormalTex;
+float4x4 _ViewProj;
+
 float time;
 
-float rand(float2 co, float offset) {
-	co += float2(offset, offset);
+uniform float4x4 _Cam_W2C, _Cam_W2S, _Cam_S2C, _Cam_C2W, _Cam_C2S;
+uniform float4 _Cam_SParams, _Cam_PParams;
+float4 CamerDepthSize;
 
-	return frac(sin(dot(co.xy, float2(12.9898, 78.233))) * 43758.5453);
+inline float DecodeFloatRG(float2 enc)
+{
+	float2 kDecodeDot = float2(1.0, 1 / 255.0);
+	return dot(enc, kDecodeDot);
 }
 
-float randNP1(float2 co, float offset) {
-	return rand(co, offset) * 2.0 - 1.0;
+inline float3 DecodeViewNormalStereo(float4 enc4)
+{
+	float kScale = 1.7777;
+	float3 nn = enc4.xyz*float3(2 * kScale, 2 * kScale, 0) + float3(-kScale, -kScale, 1);
+	float g = 2.0 / dot(nn.xyz, nn.xyz);
+	float3 n;
+	n.xy = g * nn.xy;
+	n.z = g - 1;
+	return n;
 }
+
+
+inline void DecodeDepthNormal(float4 enc, out float depth, out float3 normal)
+{
+	depth = DecodeFloatRG(enc.zw);
+	normal = DecodeViewNormalStereo(enc);
+}
+
+
+// Z buffer to linear depth
+inline float LinearEyeDepth(float z)
+{
+	//_ZBufferParams float4 x = 1 - Far / Near, y = Far / Near, z = x / Far, w = y / Far,
+	float BuffX = 1 - _Cam_PParams.z / _Cam_PParams.y;
+	float BuffY = _Cam_PParams.z / _Cam_PParams.y;
+	float BuffZ = BuffX / _Cam_PParams.z;
+	float BuffW = BuffY / _Cam_PParams.z;
+	return 1.0 / (BuffZ * z + BuffW);
+}
+
+
+Particle Collision(Particle particle, uint particleId)
+{
+	//Particle particle = particlePool[particleId];
+	float3 nextPos = particle.position + particle.velocity * emitParticleInfo[0]._dt;
+
+	float4 vpPos = mul(_ViewProj, float4(nextPos, 1.0));
+	vpPos.xyz /= vpPos.w;
+	float2 aVpPos = abs(vpPos.xy);
+
+	if (aVpPos.x < 1.0f && aVpPos.y < 1.0f) // visible on screen
+	{
+		float2 uv = vpPos.xy * 0.5 + 0.5;
+		uv.y = 1 - uv.y; // flip y axis
+
+		float depth;
+		float3 normal;
+		DecodeDepthNormal(DepthNormalTex[uv * CamerDepthSize.rg], depth, normal);
+
+		float particleCamDepth = vpPos.z; // ??? NDC [1 : 0] sys
+		particleCamDepth = 1.0 - particleCamDepth;
+		particleCamDepth = LinearEyeDepth(particleCamDepth) / _Cam_PParams.z;
+
+		float CamDepth = depth * _Cam_PParams.z; // far plane
+
+		float diff = particleCamDepth - depth;
+		float3 worldNormal = mul(_Cam_C2W, float4(normal, 0.0)).xyz;
+
+		diff *= _Cam_PParams.z;
+
+		if (diff > -(emitParticleInfo[0].bound)  && dot(worldNormal, particle.velocity) < 0) {
+			particle.velocity = reflect(particle.velocity, worldNormal) * 0.9;
+		}
+	}
+
+	return particle;
+}
+
 
 [numthreads(1024,1,1)]
 void UpdateParticle (uint3 id : SV_DispatchThreadID)
@@ -40,6 +112,9 @@ void UpdateParticle (uint3 id : SV_DispatchThreadID)
 	particle.lifespan += emitParticleInfo[0]._dt;
 	particle.position += particle.velocity * emitParticleInfo[0]._dt;
 
+	if(emitParticleInfo[0].bCollision)
+	  particle = Collision(particle, particleId);
+	
 	if ( particle.lifespan  > emitParticleInfo[0].lifespan ){
 	  deadlist.Append(particleId);
 
@@ -47,7 +122,6 @@ void UpdateParticle (uint3 id : SV_DispatchThreadID)
 	  InterlockedAdd(particleCounter[0].alivelistCount, -1);
 	}else{
 	  alivelistSec.Append(particleId);
-
 	}
 
 	float4 deltaRot = qmul(float4(0.5 * emitParticleInfo[0].angularSpeed, 0.0), particle.quaternion);
@@ -83,3 +157,77 @@ void UpdateParticle (uint3 id : SV_DispatchThreadID)
   }
 
 }
+
+
+/*
+
+	particleExtra[particleId].cameraDepth = 0.0;
+	particleExtra[particleId].depth = 0.0;
+
+	float3 viewPos = mul(_Cam_W2C, float4(particle.position, 1.0)).xyz;
+	float4 vpPos = mul(_ViewProj, float4(particle.position, 1.0));
+	vpPos.xyz /= vpPos.w;
+	float2 aVpPos = abs(vpPos.xy);
+
+	particleExtra[particleId].vpPos = mul(_ViewProj, float4(particle.position, 1.0));
+	particleExtra[particleId].vpPos /= particleExtra[particleId].vpPos.w;
+
+	if (aVpPos.x < 1.0f && aVpPos.y < 1.0f) // visible on screen
+	{
+		float2 uv = vpPos.xy * 0.5 + 0.5;
+		//float2 uv = vpPos.xy / vpPos.w * 0.5 + 0.5;
+		uv.y = 1 - uv.y;
+
+		//float2 uv = sUV(particle.position);
+		float gbufferDepth;
+		float3 normal;
+		DecodeDepthNormal(DepthNormalTex[uv * CamerDepthSize.rg], gbufferDepth, normal);
+		//gbufferDepth = 1 - gbufferDepth;
+
+		float3 camPixWorld = mul(_InverseVP, float3(vpPos.x, vpPos.y, gbufferDepth));
+
+
+		float depth = (gbufferDepth);
+		float3 worldPosition = normalize(particle.position - _WorldSpaceCameraPos.xyz) * depth + _WorldSpaceCameraPos.xyz;
+
+
+		//float particleCamDepth = length(viewPos);
+		//float particleCamDepth = 1 - vpPos.z; // ??? NDC [1 : 0] sys
+		float particleCamDepth = vpPos.z; // ??? NDC [1 : 0] sys
+		particleCamDepth = 1.0 - particleCamDepth;
+		particleCamDepth = LinearEyeDepth(particleCamDepth) / _Cam_PParams.z;
+
+		float CamDepth = gbufferDepth * _Cam_PParams.z; // far plane
+
+		particleExtra[particleId].depth = particleCamDepth;
+		particleExtra[particleId].worldposition = camPixWorld;
+		//particleExtra[particleId].cameraDepth = gbufferDepth;
+
+		//float diff = particleCamDepth - CamDepth;
+		float diff = particleCamDepth - gbufferDepth;
+		particle.color = float4(diff, 0.0, 0.0, 1.0);
+		particleExtra[particleId].cameraDepth = gbufferDepth;
+
+		float3 worldNormal = mul(_Cam_C2W, float4(normal, 0.0)).xyz;
+#if UNITY_REVERSED_Z
+//#if UNITY_UV_STARTS_AT_TOP
+		//particleExtra[particleId].cameraDepth = -999.0;
+#else
+		//particleExtra[particleId].cameraDepth = 999.0;
+#endif
+
+		if (distance(particle.position, camPixWorld) < 3.0 && dot(worldNormal, particle.velocity) < 0) {
+			//particle.velocity = reflect(particle.velocity, worldNormal);
+		}
+
+		if (diff > 0 && diff <= 0.9 && dot(worldNormal, particle.velocity) < 0) {
+		float3 worldNormal = mul(_Cam_C2W, float4(normal, 0.0)).xyz;
+		particle.velocity = reflect(particle.velocity, worldNormal) * 0.9;
+		}
+
+	}
+	else {
+	particle.color = float4(0.0, 0.0, 1.0, 1.0);
+	}
+
+*/

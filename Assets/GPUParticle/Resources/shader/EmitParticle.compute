@@ -15,9 +15,15 @@ ConsumeStructuredBuffer<uint> deadlist;
 
 float time;
 
+inline float unity_noise_randomValue(float2 uv)
+{
+	return frac(sin(dot(uv, float2(12.9898, 78.233)))*43758.5453);
+}
+
 // between -1 ~ 1
 float randNP1(float2 co) {
-	return rand(co) * 2.0 - 1.0;
+	//return rand(co) * 2.0 - 1.0;
+	return unity_noise_randomValue(co) * 2.0 - 1.0;
 }
 
 void SetSubframe(uint index, uint3 id) {
@@ -51,14 +57,14 @@ void boxEmit(uint index, uint3 id) {
 }
 
 void coneEmit(uint index, uint3 id) {
-	float2 randKey = float2( index, time);
+	float2 randKey = float2(id.x / 1024.0, time % 1.0);
 	float randAngle = (randNP1(randKey) * (emitParticleInfo[0].coneEmitAngle)) * 0.5;
 	float3 right = AxisRotateByQuaternion(float3(1.0, 0.0, 0.0), emitParticleInfo[0].emitterRot);
 	float3 up = AxisRotateByQuaternion(float3(0.0, 1.0, 0.0), emitParticleInfo[0].emitterRot);
 	float3 forward = AxisRotateByQuaternion(float3(0.0, 0.0, 1.0), emitParticleInfo[0].emitterRot);
 	float2 randKeyRev = float2(randKey.y, randKey.x);
-	float randRight = (randNP1(randKeyRev + time + 1.2) + 0.2);
-	float randUp = (randNP1(randKeyRev + time + 0.4) + 0.2);
+	float randRight = (randNP1(randKeyRev + time + 1.2));
+	float randUp = (randNP1(randKeyRev + time + 0.4) );
 	float2 randRightUp = randRight == 0.0 && randUp == 0.0 ? float2(1.0, 1.0) : float2(randRight, randUp);
 	randRightUp = normalize(randRightUp);
 	float3 axis = AxisRotateByQuaternion(float3(randRightUp.x, randRightUp.y, 0.0), emitParticleInfo[0].emitterRot);
@@ -74,7 +80,7 @@ void coneEmit(uint index, uint3 id) {
 }
 
 void sphereEmit(uint index, uint3 id) {
-	float2 randKey = float2(index, time);
+	float2 randKey = float2(id.x / 1024.0, time % 1.0);
 	float3 dir = normalize(float3(randNP1(randKey + 0.0), randNP1(randKey + 1.0), randNP1(randKey + 2.0)));
 
 
@@ -86,6 +92,7 @@ void sphereEmit(uint index, uint3 id) {
 }
 
 void InitParticle(uint index, uint3 id) {
+	particlePool[index].color = float4(0, 0, 0, 1.0);
 	[call]switch(emitParticleInfo[0].emitKind) {
     case 1:
     	sphereEmit(index, id);

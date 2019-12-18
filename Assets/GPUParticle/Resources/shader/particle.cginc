@@ -18,7 +18,8 @@ struct EmitParticleInfo
 	int emitKind;
 	float3 angularSpeed;
 	float3 boxEmitSize;
-	
+	float bound;
+	bool bCollision;
 };
 
 struct ParticleCounter{
@@ -34,6 +35,7 @@ struct Particle {
 	float4x4 model;
 	float3 scale;
 	float4 quaternion;
+	float4 color;
 };
 
 struct IndirectArgumentBuffer
